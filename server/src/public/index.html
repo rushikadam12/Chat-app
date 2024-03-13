@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="en" style="height: 100%">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Socket.io chat</title>
+    <style>
+      .visible {
+        display: block;
+      }
+    </style>
+  </head>
+  <body style="box-sizing: border-box; margin: 0; padding: 0; height: 100%">
+    <div
+      style="
+        width: 100%;
+        font-size: x-large;
+        display: flex;
+        align-items: center;
+        flex-direction: column;
+        gap: 1rem;
+        height: 100%;
+      "
+    >
+      <h1
+        style="
+          font-size: xx-large;
+          font-weight: 800;
+          text-align: start;
+          width: 100%;
+        "
+        class="connection_tag"
+      >
+        "connected checking...."
+      </h1>
+      <div style="width: 100%; color: black" class="messages">
+        <input
+          type="text"
+          class="room_input"
+          style="
+            flex: 1;
+            background-color: black;
+            color: aliceblue;
+            padding: 0.8rem;
+            border-radius: 20px;
+            outline: none;
+            border: none;
+          "
+          placeholder="Enter your room code"
+        />
+        <button
+          style="
+            cursor: pointer;
+            background-color: black;
+            border-radius: 15px;
+            outline: none;
+            color: aliceblue;
+            border: none;
+            padding: 0.8rem;
+          "
+          class="roomBtn"
+        >
+          Enter
+        </button>
+        <button
+          style="
+            cursor: pointer;
+            background-color: black;
+            border-radius: 15px;
+            outline: none;
+            color: aliceblue;
+            border: none;
+            padding: 0.8rem;
+          "
+          class="leaveRoom"
+        >
+          leave Room
+        </button>
+      </div>
+    </div>
+
+    <div style="max-width: 100%; display: flex; justify-content: flex-end">
+      <div
+        style="
+          margin-top: auto;
+          width: 100%;
+          padding: 1rem;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+        "
+      >
+        <input
+          type="text"
+          class="user_input"
+          style="
+            flex: 1;
+            background-color: black;
+            color: aliceblue;
+            padding: 0.8rem;
+            border-radius: 20px;
+            outline: none;
+            border: none;
+          "
+          placeholder="Enter your message"
+        />
+
+        <button
+          style="
+            background-color: black;
+            border-radius: 15px;
+            outline: none;
+            border: none;
+            padding: 0.8rem;
+            color: aliceblue;
+            cursor: pointer;
+          "
+          class="sendBtn"
+        >
+          send
+        </button>
+        <button
+          style="
+            cursor: pointer;
+            background-color: black;
+            border-radius: 15px;
+            outline: none;
+            color: aliceblue;
+            border: none;
+            padding: 0.8rem;
+          "
+          class="btncnt"
+        >
+          disconnect
+        </button>
+      </div>
+    </div>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+      const socket = io();
+      console.log(socket);
+      let code = null;
+      const sendBtn = document.querySelector(".sendBtn");
+      const inputText = document.querySelector(".user_input");
+      const allmessages = document.querySelector(".messages");
+      const btncnt = document.querySelector(".btncnt");
+      const roomBtn = document.querySelector(".roomBtn");
+      const roomInput = document.querySelector(".room_input");
+      const leaveRoom = document.querySelector(".leaveRoom");
+      const name = prompt("Enter your name:");
+      const connectionTag = document.querySelector(".connection_tag");
+      connectionTag.innerText = `${name}`;
+      socket.emit("user-name", name);
+
+      leaveRoom.addEventListener("click", () => {
+        roomInput.value = "";
+        socket.emit("leave room", code);
+      });
+
+      socket.on("message", ({ username, message }) => {
+        // console.log(msg);
+        const text = document.createElement("p");
+        text.style.background = "aqua";
+        text.innerText = username + ":" + message;
+        allmessages.appendChild(text);
+      });
+
+      roomBtn.addEventListener("click", () => {
+        code = roomInput.value;
+
+        socket.emit("room code", code);
+      });
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+          if (inputText.value) {
+            const text = document.createElement("p");
+            text.innerText = `You:${inputText.value}`;
+            allmessages.appendChild(text);
+            socket.emit("message", inputText.value, code);
+            inputText.value = "";
+          }
+          event.preventDefault();
+        }
+      });
+
+      sendBtn.addEventListener("click", () => {
+        if (inputText.value) {
+          const text = document.createElement("p");
+          text.innerText = `You:${inputText.value}`;
+          allmessages.appendChild(text);
+          socket.emit("message", inputText.value, code);
+          inputText.value = "";
+        }
+      });
+      btncnt.addEventListener("click", () => {
+        if (socket.connected) {
+          const text = document.createElement("p");
+          btncnt.innerText = "connect";
+          const msg = "connect";
+          text.innerText = msg;
+          allmessages.appendChild(text);
+          socket.disconnect();
+        } else {
+          const text = document.createElement("p");
+          btncnt.innerText = "disconnect";
+
+          const msg = "disconnect";
+          text.innerText = msg;
+          allmessages.appendChild(text);
+          socket.connect();
+        }
+        window.scrollTo(0, document.body.scrollHeight);
+      });
+    </script>
+  </body>
+</html>
