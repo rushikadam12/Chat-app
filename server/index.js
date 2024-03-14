@@ -9,6 +9,7 @@ const { Server } = require("socket.io");
 
 //files imports
 const Register = require("./src/routes/Register.routes");
+const UserLogin=require("./src/routes/Login.routes")
 const io = new Server(server, {
   connectionStateRecovery: {},
 });
@@ -40,7 +41,9 @@ app.use(express.json());
 // app.get("/", (req, res) => {
 //   return res.sendFile("../server/src/public/index.html");
 // });
+/*Routes */
 app.use("/api/v1/register", Register);
+app.use("/api/v1/login", UserLogin);
 
 const startServer = () => {
   server.listen(process.env.PORT || 3000, () => {

@@ -7,9 +7,9 @@ const validate = (req, res, next) => {
   }
   const extractErrors = [];
   errors.array().map((err) => {
-    extractErrors.push({ [err.path]: err.msg });  
+    extractErrors.push({ [err.path]: err.msg });
   });
   // console.log(extractErrors)
-  throw new ApiError(422, "data is invalid", JSON.stringify(extractErrors));
+  throw new ApiError(422, false,"data is invalid", extractErrors);
 };
 module.exports = validate;
