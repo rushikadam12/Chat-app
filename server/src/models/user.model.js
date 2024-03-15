@@ -28,19 +28,21 @@ const userModel = new mongoose.Schema(
   { timestamps: true }
 );
 
-//pre function
+// Define pre-save hook to hash the password before saving
 userModel.pre("save", async function (next) {
   if (!this.isModified("password")) return next();
   this.password = await bcrypt.hash(this.password, 10);
   console.log(this.password);
 });
 
-userModel.method.isPasswordCorrect = async function (password) {
+// Attach methods to the schema using "methods"
+userModel.methods.isPasswordCorrect = async function (password) {
   return await bcrypt.compare(password, this.password);
 };
 
-userModel.method.generateToken = function (_id) {
-  return jwt.sign(
+// token generation method
+userModel.methods.generateToken = async function () {
+  return await jwt.sign(
     { _id: this._id, email: this.email, username: this.username },
     process.env.SEC_KEY,
     { expiresIn: process.env.EXPIRE }
@@ -48,8 +50,6 @@ userModel.method.generateToken = function (_id) {
 };
 
 
-
-//create User model
 const User = mongoose.model("User", userModel);
 
 module.exports = User;

@@ -5,6 +5,7 @@ const app = express();
 const DB = require("./src/DB/DBconnection");
 const path = require("path");
 const server = http.createServer(app);
+const cookieParser=require('cookie-parser')
 const { Server } = require("socket.io");
 
 //files imports
@@ -16,6 +17,7 @@ const io = new Server(server, {
 
 const user = {};
 app.use(express.json());
+app.use(cookieParser())
 // io.on("connection", (socket) => {
 //   // console.log("connection establish:", socket.id);
 
@@ -42,6 +44,7 @@ app.use(express.json());
 //   return res.sendFile("../server/src/public/index.html");
 // });
 /*Routes */
+
 app.use("/api/v1/register", Register);
 app.use("/api/v1/login", UserLogin);
 
