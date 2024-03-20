@@ -21,6 +21,7 @@ const userModel = new mongoose.Schema(
 
     avatar: {
       type: String,
+
       default:
         "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ_kSSoomJ9hiFXmiF2RdZlwx72Y23XsT6iwQ&usqp=CAU",
     },
@@ -48,7 +49,6 @@ userModel.methods.generateToken = async function () {
     { expiresIn: process.env.EXPIRE }
   );
 };
-
 
 const User = mongoose.model("User", userModel);
 

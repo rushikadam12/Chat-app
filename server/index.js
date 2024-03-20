@@ -7,17 +7,30 @@ const path = require("path");
 const server = http.createServer(app);
 const cookieParser=require('cookie-parser')
 const { Server } = require("socket.io");
+const passport=require('./src/controllers/Passport.controller')
+const session = require("express-session")
 
 //files imports
 const Register = require("./src/routes/Register.routes");
-const UserLogin=require("./src/routes/Login.routes")
+const UserLogin = require("./src/routes/Login.routes")
+const passportLogin = require("./src/routes/passport.routes")
+
 const io = new Server(server, {
   connectionStateRecovery: {},
 });
 
 const user = {};
 app.use(express.json());
+app.use(
+  session({
+    secret: "your_secret_key",
+    resave: false,
+    saveUninitialized: false,
+  })
+);
 app.use(cookieParser())
+app.use(passport.initialize())
+app.use(passport.session())
 // io.on("connection", (socket) => {
 //   // console.log("connection establish:", socket.id);
 
@@ -47,6 +60,7 @@ app.use(cookieParser())
 
 app.use("/api/v1/register", Register);
 app.use("/api/v1/login", UserLogin);
+app.use("/api/v1/passport", passportLogin);
 
 const startServer = () => {
   server.listen(process.env.PORT || 3000, () => {
