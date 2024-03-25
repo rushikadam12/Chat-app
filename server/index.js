@@ -14,6 +14,7 @@ const session = require("express-session")
 const Register = require("./src/routes/Register.routes");
 const UserLogin = require("./src/routes/Login.routes")
 const passportLogin = require("./src/routes/passport.routes")
+const socketInitialization=require("./src/socket/Socket")
 
 const io = new Server(server, {
   connectionStateRecovery: {},
@@ -31,6 +32,7 @@ app.use(
 app.use(cookieParser())
 app.use(passport.initialize())
 app.use(passport.session())
+socketInitialization(io)
 // io.on("connection", (socket) => {
 //   // console.log("connection establish:", socket.id);
 
