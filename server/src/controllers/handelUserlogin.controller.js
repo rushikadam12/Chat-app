@@ -10,7 +10,7 @@ const handelLogin = asyncHandler(async (req, res) => {
     throw new ApiError(404, "User not found");
   }
     const token =await user.generateToken();
-    
+    console.log("Passport JS token:",token)
     res.status(301).cookie("accessToken",token,{httpOnly:true}).json(new ApiResponse(200,"google login successfully",user))
   
 });

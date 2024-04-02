@@ -3,7 +3,7 @@ const User = require("../models/user.model");
 const ApiError = require("../utility/ApiError");
 const asyncHandler = require("../utility/asyncHandler");
 const ApiResponse = require("../utility/ApiResponse");
-const { ChatMessage } = require("../models/message.model");
+
 const { emitMessage } = require("../socket/Socket");
 const { default: mongoose } = require("mongoose");
 const ChatEventEnum = require("../socket/constants");
@@ -34,7 +34,7 @@ const chatAggregation = () => {
     },
     {
       $lookup: {
-        from: "chatmessages",
+        from: "ChatMessage",
         foreignField: "_id",
         localField: "lastMessage",
         as: "lastMessage",
@@ -48,9 +48,9 @@ const chatAggregation = () => {
               pipeline: [
                 {
                   $project: {
+                    email: 1,
                     username: 1,
                     avatar: 1,
-                    email: 1,
                   },
                 },
               ],
@@ -64,7 +64,7 @@ const chatAggregation = () => {
 
 const OnetoOneChat = asyncHandler(async (req, res) => {
   const { receiverID } = req.params;
-
+  console.log("ReciverID:",receiverID);
   if (!receiverID) {
     throw new ApiError(401, false, "user Id not found");
   }
@@ -75,7 +75,7 @@ const OnetoOneChat = asyncHandler(async (req, res) => {
   if (receiver._id.toString() === req.user._id.toString()) {
     throw new ApiError(400, false, "You can not chat with your self");
   }
-  // new chat
+  // retrieved chat
   const chat = Chat.aggregate([
     {
       $match: {
@@ -83,15 +83,19 @@ const OnetoOneChat = asyncHandler(async (req, res) => {
           { participants: { $elemMatch: { $eq: req.user._id } } },
           {
             participants: {
-              $elemMatch: { $eq: new mongoose.Types.ObjectId(receiverID) },
+              $elemMatch: {
+                $eq: new mongoose.Types.ObjectId(receiverID.toString()),
+              },
             },
           },
         ],
+       
       },
     },
     ...chatAggregation(),
   ]);
-  if (chat.length) {
+  console.log("Retrieved chat:",chat)
+  if (await chat.length) {
     return res
       .status(200)
       .json(new ApiResponse(200, "Chat retrieved successfully", chat[0]));
@@ -99,9 +103,9 @@ const OnetoOneChat = asyncHandler(async (req, res) => {
   //create new chat
   const newChatMessage = await Chat.create({
     name: "one to one chat",
-    participants: [req.user._id, new mongoose.Types.ObjectId(receiverID)],
+    participants: [req.user._id, new mongoose.Types.ObjectId(receiverID.toString())],
   });
-
+  // console.log(newChatMessage)
   const result = Chat.aggregate([
     {
       $match: {
@@ -110,7 +114,7 @@ const OnetoOneChat = asyncHandler(async (req, res) => {
     },
     ...chatAggregation(),
   ]);
-
+  console.log("result:",result)
   const payload = result[0];
 
   if (!payload) {
@@ -131,4 +135,20 @@ const OnetoOneChat = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, "Chat retrieved successfully", payload));
 });
 
-module.exports = { OnetoOneChat };
+const getAllChat = asyncHandler(async (req,res) => {
+  const result = await Chat.aggregate([
+    {
+      $match: {
+        participants: { $elemMatch: { $eq: req.user._id } },
+      },
+    },
+    {
+      $sort: { updateAt: -1 },
+    },
+
+    ...chatAggregation(),
+  ]);
+  return res.status(200).json(new ApiResponse(200,"User chat fetched successfully",result||[],true))
+});
+
+module.exports = { OnetoOneChat, getAllChat };

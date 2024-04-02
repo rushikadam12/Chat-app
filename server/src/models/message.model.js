@@ -1,4 +1,5 @@
-import mongoose, { Schema } from "mongoose";
+const { Schema, default: mongoose } = require("mongoose");
+
 
 // TODO: Add image and pdf file sharing in the next version
 const chatMessageSchema = new Schema(
@@ -26,5 +27,5 @@ const chatMessageSchema = new Schema(
   },
   { timestamps: true }
 );
-
-export const ChatMessage = mongoose.model("ChatMessage", chatMessageSchema);
+const ChatMessage = mongoose.model("ChatMessage", chatMessageSchema);
+module.exports =ChatMessage

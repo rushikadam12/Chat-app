@@ -21,7 +21,7 @@ const UserLogin = asyncHandler(async (req, res) => {
   }
   
   const token = await user.generateToken();//generate the token for verification
-  
+  console.log(token)
   const loggedUser = await User.findOne({ _id: user._id }).select("-password");
 
   if (token) {
