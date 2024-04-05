@@ -14,7 +14,7 @@ const chatAggregation = () => {
   return [
     {
       $lookup: {
-        from: "user",
+        from: "users",
         foreignField: "_id",
         localField: "participants",
         as: "participants",
@@ -34,14 +34,14 @@ const chatAggregation = () => {
     },
     {
       $lookup: {
-        from: "ChatMessage",
+        from: "chatmessages",
         foreignField: "_id",
         localField: "lastMessage",
         as: "lastMessage",
         pipeline: [
           {
             $lookup: {
-              from: "Users",
+              from: "users",
               foreignField: "_id",
               localField: "sender",
               as: "sender",
@@ -76,7 +76,7 @@ const OnetoOneChat = asyncHandler(async (req, res) => {
     throw new ApiError(400, false, "You can not chat with your self");
   }
   // retrieved chat
-  const chat = Chat.aggregate([
+  const chat = await Chat.aggregate([
     {
       $match: {
         $and: [
@@ -95,7 +95,7 @@ const OnetoOneChat = asyncHandler(async (req, res) => {
     ...chatAggregation(),
   ]);
   console.log("Retrieved chat:",chat)
-  if (await chat.length) {
+  if ( chat.length) {
     return res
       .status(200)
       .json(new ApiResponse(200, "Chat retrieved successfully", chat[0]));

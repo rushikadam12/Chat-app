@@ -10,7 +10,7 @@ const chatMessageAggregation = () => {
   return [
     {
       $lookup: {
-        from: "User",
+        from: "users",
         foreignField: "_id",
         localField: "sender",
         as: "sender",
@@ -60,12 +60,13 @@ const getAllMessage = asyncHandler(async (req, res) => {
     },
   ]);
 
+  // console.log(message)
   
 
   return res
     .status(200)
     .json(
-      new ApiResponse(200, "Message fetched successfully", message || [], true)
+      new ApiResponse(200, "Message fetched successfully",message ||[], true)
     );
 });
 

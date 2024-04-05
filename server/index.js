@@ -68,6 +68,14 @@ app.use("/api/v1/passport", passportLogin);
 app.use("/api/v1/chat-app/chats", chatRouter);
 app.use("/api/v1/chat-app/messages", messageRouter);
 
+io.on("connect", (socket) => {
+  console.log("A user connected");
+
+  socket.on("disconnect", () => {
+    console.log("User disconnected");
+  });
+});
+
 const startServer = () => {
   server.listen(process.env.PORT || 3000, () => {
     console.log("server is online:", process.env.PORT || 3000);
