@@ -6,19 +6,22 @@ const userModel = new mongoose.Schema(
   {
     email: {
       type: String,
-      require: true,
+      require: [true, "email required"],
       lowercase: true,
     },
     password: {
       type: String,
-      require: true,
+      require: [true, "password required"],
     },
     username: {
       type: String,
-      require: true,
+      require: [true, "username required"],
       lowercase: true,
     },
-
+    refreshToken: {
+      type: String,
+      default:"",
+    },
     avatar: {
       type: String,
 
@@ -49,7 +52,11 @@ userModel.methods.generateToken = async function () {
     { expiresIn: process.env.EXPIRE }
   );
 };
-
+userModel.methods.generateRefreshToken = async function (userId) {
+  return await jwt.sign({ _id: userId }, process.env.SEC_KEY, {
+    expiresIn: process.env.EXPIRE,
+  });
+};
 const User = mongoose.model("User", userModel);
 
 module.exports = User;

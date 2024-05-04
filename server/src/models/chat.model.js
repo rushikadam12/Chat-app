@@ -6,6 +6,10 @@ const chatSchema = new Schema(
       type: String,
       require: true,
     },
+    isGroupChat: {
+      type: Boolean,
+      default: false,
+    },
     participants: [
       {
         type: Schema.Types.ObjectId,
