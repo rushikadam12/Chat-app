@@ -7,11 +7,12 @@ const ChatEventEnum = Object.freeze({
   //?join the chat
   JOIN_EVENT: "joinChat",
   // ?new one on one chat
-    NEW_CHAT_EVENT: "newChat",
-//   >when message is received
+  NEW_CHAT_EVENT: "newChat",
+  //   >when message is received
   MESSAGE_RECEIVED_EVENT: "messageReceived",
   // ?when there is socket error
   SOCKET_EVENT: "socketError",
+  LEAVE_CHAT_EVENT:"leaveChat",
 });
 
 module.exports=Object.values(ChatEventEnum)

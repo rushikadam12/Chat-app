@@ -14,6 +14,7 @@ const ChatMessage = require("../models/message.model");
 const chatAggregation = () => {
   return [
     {
+      // lookup for the participants present
       $lookup: {
         from: "users",
         foreignField: "_id",
@@ -41,6 +42,7 @@ const chatAggregation = () => {
         as: "lastMessage",
         pipeline: [
           {
+            // get details of the sender
             $lookup: {
               from: "users",
               foreignField: "_id",
@@ -57,7 +59,15 @@ const chatAggregation = () => {
               ],
             },
           },
+          {
+            $addFields: {
+              sender: { $first: "$sender" },
+            },
+          },
         ],
+      },
+      $addFields: {
+        lastMessage: { $first: "$lastMessage" },
       },
     },
   ];
@@ -191,7 +201,7 @@ const createGroupChat = asyncHandler(async (req, res) => {
 
   payLoad?.participants?.forEach((participant) => {
     if (participants._id.toString() === req.user._id.toString()) {
-      throw new ApiError(404, false, "You can send message to your self");
+      return;
     }
     emitMessage(
       req,
@@ -200,7 +210,11 @@ const createGroupChat = asyncHandler(async (req, res) => {
       payLoad
     );
   });
-  return res.status(200).json(new ApiResponse(200, "THe chat group has been created", payLoad));
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200, "THe chat group has been created", payLoad, true)
+    );
 });
 
 const deleteCascadeChatMessage = async (chatId) => {
@@ -221,7 +235,7 @@ const deleteCascadeChatMessage = async (chatId) => {
   });
 };
 
-const SearchAvailableUsers = asyncHandler(async () => {
+const searchAvailableUsers = asyncHandler(async (req, res) => {
   const users = await User.aggregate([
     {
       $match: {
@@ -238,13 +252,70 @@ const SearchAvailableUsers = asyncHandler(async () => {
       },
     },
   ]);
-  return res.status(200).json(new ApiResponse(200,"available users",users));
+  return res
+    .status(200)
+    .json(new ApiResponse(200, "available users", users, true));
+});
+
+const getGroupChatDetails = asyncHandler(async (req, res) => {
+  const { chatId } = req.params;
+  const message = await Chat.aggregate({
+    $match: {
+      _id: new mongoose.Types.ObjectId(chatId),
+      isGroupChat: true,
+    },
+    ...chatAggregation(),
+  });
+  if (!message) {
+    throw new ApiError(404, false, "Did not find the chat");
+  }
+  return res
+    .status(200)
+    .json(new ApiResponse(200, "All GroupChat is fetch", message, true));
+});
+
+const deleteGroupChat = asyncHandler(async (req, res) => {
+  const { chatId } = req.params;
+  const groupChat = await Chat.aggregate({
+    $match: {
+      _id: new mongoose.Types.ObjectId(chatId),
+      isGroupChat: true,
+    },
+    ...chatAggregation(),
+  });
+
+  const chat = groupChat[0];
+  if (!chat) {
+    throw new ApiError(400, false, "Chat is not present");
+  }
+
+  if (chat.admin?.toString() !== req.user._id.toString()) {
+    throw new ApiError(404, false, "Only admin can delete chat");
+  }
+  await Chat.findByIdAndDelete(chatId);
+  await deleteCascadeChatMessage(chatId);
+
+  chat?.participant?.forEach((participant) => {
+    if (participant._id.toString() !== req.user._id.toString()) {
+      return;
+    }
+    emitMessage(
+      req,
+      participant._id?.toString(),
+      ChatEventEnum.LEAVE_CHAT_EVENT,
+      chat
+    );
+  });
+  return res
+    .status(200)
+    .json(new ApiResponse(200, "Successfully deleted chat", {}));
 });
 
 module.exports = {
   OnetoOneChat,
   getAllChat,
   createGroupChat,
-  deleteCascadeChatMessage,
-  SearchAvailableUsers,
+  searchAvailableUsers,
+  getGroupChatDetails,
+  deleteGroupChat,
 };
