@@ -6,6 +6,8 @@ const ApiError = require("../utility/ApiError");
 const ApiResponse = require("../utility/ApiResponse");
 const asyncHandler = require("../utility/asyncHandler");
 const ChatEventEnum = require("../socket/constants");
+const { getLocalPath } = require("../utility/getLocalPaths");
+const { getStaticPath } = require("../utility/getLocalPaths");
 const chatMessageAggregation = () => {
   return [
     {
@@ -72,24 +74,24 @@ const getAllMessage = asyncHandler(async (req, res) => {
 const sendMessage = asyncHandler(async (req, res) => {
   const { chatId } = req.params;
   const { content } = req.body;
-  console.log("Content:", content);
-  if (!content) {
+  // console.log("Content:", req.files?.attachments);
+  if (!content && !req.files?.attachments?.length) {
     throw new ApiError(404, false, "Message content required");
   }
   if (!chatId) {
-    throw new ApiError(404, false, "Message content required");
+    throw new ApiError(404, false, "chatId required required");
   }
   const selectChat = Chat.findById(chatId);
   if (!selectChat) {
     throw new ApiError(404, false, "chat is not present");
   }
-  // console.log(req.files);
+
   const messageFiles = [];
   if (req.files && req.files?.attachments?.length > 0) {
-    req.files.attachments?.map((attachments) => {
+    req.files.attachments?.map((attachment) => {
       messageFiles.push({
-        url: getStaticFilePath(req, attachments.filename),
-        localPath: getLocalPath(attachments.filename),
+        url: getStaticPath(req, attachment.filename),
+        localPath: getLocalPath(attachment.filename),
       });
     });
   }
@@ -97,7 +99,7 @@ const sendMessage = asyncHandler(async (req, res) => {
   const message = await ChatMessage.create({
     sender: new mongoose.Types.ObjectId(req.user._id.toString()),
     content: content || "",
-    attachments: messageFiles || [],
+    attachments: messageFiles,
     chat: new mongoose.Types.ObjectId(chatId),
   });
 

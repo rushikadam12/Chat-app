@@ -2,12 +2,14 @@ const multer = require("multer");
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, "/user_image");
+    cb(null, "user_image/");
   },
   filename: function (req, file, cb) {
     let filExtension = "";
     if (file.originalname.split(".").length > 1) {
-      file.originalname.substring(file.originalname.indexOf("."));
+      filExtension = file.originalname.substring(
+        file.originalname.indexOf(".")
+      );
     }
 
     const filenameWithoutExtension = file.originalname
@@ -17,18 +19,12 @@ const storage = multer.diskStorage({
       ?.split(".")[0];
 
     const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    cb(
-      null,
-      filenameWithoutExtension +
-        Date.now() +
-        Math.ceil(Math.random() * 1e5) +
-        filExtension
-    );
+    cb(null, filenameWithoutExtension + uniqueSuffix + filExtension);
   },
 });
 
-const upload = multer({
+const uploads = multer({
   storage: storage,
-  limits: { fileSize: 2 * 1000 * 1000 },
+  limits: { fileSize: 4 * 1000 * 1000 },
 });
-module.exports = { upload };
+module.exports = { uploads };

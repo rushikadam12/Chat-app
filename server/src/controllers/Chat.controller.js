@@ -462,7 +462,7 @@ const removePeronFromGroup = asyncHandler(async (req, res) => {
     chatId,
     {
       $pull: {
-        _id: participantId,
+       _id: participantId , 
       },
     },
     { new: true }
