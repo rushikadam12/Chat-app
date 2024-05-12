@@ -7,6 +7,6 @@ const verifyJWT = require("../middleware/verifyJWT.middlewares");
 const router = express.Router();
 router.use(verifyJWT)
 
-router.route("/:chatId").get(getAllMessage).post(sendMessage);
+router.route("/:chatId").get(getAllMessage).post(sendMessage);  
 
 module.exports=router

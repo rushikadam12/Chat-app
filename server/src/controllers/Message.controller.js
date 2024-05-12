@@ -1,5 +1,5 @@
 const Chat = require("../models/chat.model");
-const {  default: mongoose } = require("mongoose");
+const { default: mongoose } = require("mongoose");
 const ChatMessage = require("../models/message.model");
 const { emitMessage } = require("../socket/Socket");
 const ApiError = require("../utility/ApiError");
@@ -61,19 +61,18 @@ const getAllMessage = asyncHandler(async (req, res) => {
   ]);
 
   // console.log(message)
-  
 
   return res
     .status(200)
     .json(
-      new ApiResponse(200, "Message fetched successfully",message ||[], true)
+      new ApiResponse(200, "Message fetched successfully", message || [], true)
     );
 });
 
 const sendMessage = asyncHandler(async (req, res) => {
   const { chatId } = req.params;
   const { content } = req.body;
-  console.log("Content:", content); 
+  console.log("Content:", content);
   if (!content) {
     throw new ApiError(404, false, "Message content required");
   }
@@ -84,25 +83,24 @@ const sendMessage = asyncHandler(async (req, res) => {
   if (!selectChat) {
     throw new ApiError(404, false, "chat is not present");
   }
-  // const messageFiles = [];
-  // if (req.files && req.files?.attachments?.length > 0) {
-  //   req.files.attachments?.map((attachments) => {
-  //     messageFiles.push({
-  //       url: getStaticFilePath(req, attachments.filename),
-  //       localPath: getLocalPath(attachments.filename),
-  //     });
-  //   });
-  // }    
-// to be implement
-  
+  // console.log(req.files);
+  const messageFiles = [];
+  if (req.files && req.files?.attachments?.length > 0) {
+    req.files.attachments?.map((attachments) => {
+      messageFiles.push({
+        url: getStaticFilePath(req, attachments.filename),
+        localPath: getLocalPath(attachments.filename),
+      });
+    });
+  }
 
   const message = await ChatMessage.create({
     sender: new mongoose.Types.ObjectId(req.user._id.toString()),
     content: content || "",
-    attachments: [],
+    attachments: messageFiles || [],
     chat: new mongoose.Types.ObjectId(chatId),
   });
-  
+
   const chat = await Chat.findByIdAndUpdate(
     chatId,
     { $set: { lastMessage: message._id } },

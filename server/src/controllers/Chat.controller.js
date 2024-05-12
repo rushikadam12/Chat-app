@@ -25,16 +25,17 @@ const chatAggregation = () => {
             $project: {
               password: 0,
               refreshToken: 0,
-              // forgotPasswordToken: 0,
-              // forgotPasswordExpiry: 0,
-              // emailVerificationToken: 0,
-              // emailVerificationExpiry: 0,
+              forgotPasswordToken: 0,
+              forgotPasswordExpiry: 0,
+              emailVerificationToken: 0,
+              emailVerificationExpiry: 0,
             },
           },
         ],
       },
     },
     {
+      // lookup for the group chats
       $lookup: {
         from: "chatmessages",
         foreignField: "_id",
@@ -51,9 +52,9 @@ const chatAggregation = () => {
               pipeline: [
                 {
                   $project: {
-                    email: 1,
                     username: 1,
                     avatar: 1,
+                    email: 1,
                   },
                 },
               ],
@@ -66,6 +67,8 @@ const chatAggregation = () => {
           },
         ],
       },
+    },
+    {
       $addFields: {
         lastMessage: { $first: "$lastMessage" },
       },
@@ -152,7 +155,7 @@ const getAllChat = asyncHandler(async (req, res) => {
   const result = await Chat.aggregate([
     {
       $match: {
-        participants: { $elemMatch: { $eq: req.user._id } },
+        participants: { $elemMatch: { $eq: req.user?._id } },
       },
     },
     {
@@ -161,6 +164,7 @@ const getAllChat = asyncHandler(async (req, res) => {
 
     ...chatAggregation(),
   ]);
+  console.log("result:" + result);
   return res
     .status(200)
     .json(
@@ -170,10 +174,11 @@ const getAllChat = asyncHandler(async (req, res) => {
 
 const createGroupChat = asyncHandler(async (req, res) => {
   const { name, participants } = req.body;
+  console.log(req.user._id);
   if (participants.includes(req.user._id.toString())) {
     throw new ApiError(400, false, "Participants should not contain himself");
   }
-  const members = [...new set([...participants, req.user.Id.toString()])]; //to remove duplicate participant
+  const members = [...new Set([...participants, req.user._id.toString()])]; //to remove duplicate participant
   if (members.length < 3) {
     throw new ApiError(404, false, "Minimum three participants is required");
   }
@@ -182,25 +187,26 @@ const createGroupChat = asyncHandler(async (req, res) => {
     name,
     isGroupChat: true,
     participants: members,
-    admin: req.user._id.tosString(),
+    admin: req.user._id.toString(),
   });
 
-  const chat = Chat.aggregate([
+  const chat = await Chat.aggregate([
     {
       $match: {
-        _id: message._id,
+        _id: groupChat._id,
       },
     },
     ...chatAggregation(),
   ]);
-
+  console.log(chat);
+  // return res.send({ ans: "........" });
   const payLoad = chat[0];
   if (!payLoad) {
     throw new ApiError(500, "Internal serve Error");
   }
 
   payLoad?.participants?.forEach((participant) => {
-    if (participants._id.toString() === req.user._id.toString()) {
+    if (participants.toString() === req.user._id.toString()) {
       return;
     }
     emitMessage(
@@ -436,10 +442,8 @@ const addParticipantInGroup = asyncHandler(async (req, res) => {
 const removePeronFromGroup = asyncHandler(async (req, res) => {
   const { chatId, participantId } = req.params;
   const groupChat = await Chat.findOne({
-    $match: {
-      _id: new mongoose.Types.ObjectId(chatId),
-      isGroupChat: true,
-    },
+    _id: new mongoose.Types.ObjectId(chatId),
+    isGroupChat: true,
   });
   if (!groupChat) {
     throw new ApiError(404, false, "Group Chat doesn't exist");
@@ -459,19 +463,18 @@ const removePeronFromGroup = asyncHandler(async (req, res) => {
     {
       $pull: {
         _id: participantId,
-        isGroupChat: true,
       },
     },
     { new: true }
   );
-  const upChat = await Chat.aggregate(
+  const upChat = await Chat.aggregate([
     {
       $match: {
         _id: updateChat._id,
       },
     },
-    ...chatAggregation()
-  );
+    ...chatAggregation(),
+  ]);
   const payload = upChat[0];
   if (!payload) {
     throw new ApiError(500, false, "Internal server error");
