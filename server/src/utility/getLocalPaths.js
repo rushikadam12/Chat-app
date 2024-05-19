@@ -1,8 +1,7 @@
-
-const getLocalPath = (req, fileName) => {
-  return `${req.protocol}://${req.headers}/user_image/${fileName}`;
+const getStaticPath = (req, fileName) => {
+  return `${req.protocol}://${req.get('host')}/user_image/${fileName}`;
 };
-const getStaticPath = (filename) => {
+const getLocalPath = (filename) => {
   return `user_image/${filename}`;
 };
 

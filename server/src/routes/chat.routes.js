@@ -33,6 +33,6 @@ router
 router.route("/leave/group/:chatId").delete(leaveGroupChat);
 
 router.route("/removeMessage/:chatId").delete(deleteOneOnOneChat);
-router.route("/");
+
 
 module.exports = router;

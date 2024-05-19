@@ -93,6 +93,7 @@ const OnetoOneChat = asyncHandler(async (req, res) => {
   const chat = await Chat.aggregate([
     {
       $match: {
+        isGroupChat: false,
         $and: [
           { participants: { $elemMatch: { $eq: req.user._id } } },
           {
@@ -122,7 +123,7 @@ const OnetoOneChat = asyncHandler(async (req, res) => {
     ],
   });
   // console.log(newChatMessage)
-  const result = Chat.aggregate([
+  const result = await Chat.aggregate([
     {
       $match: {
         _id: newChatMessage._id,
@@ -137,11 +138,11 @@ const OnetoOneChat = asyncHandler(async (req, res) => {
     throw new ApiError(500, "Internal server error");
   }
 
-  payload?.participants?.forEach((participants) => {
-    if (participants._id.toString() === req.user._id.toString()) return; // don't emit the event for the logged in use as he is the one who is initiating the chat
+  payload?.participants?.forEach((participant) => {
+    if (participant._id.toString() === req.user._id.toString()) return; // don't emit the event for the logged in use as he is the one who is initiating the chat
     emitMessage(
       req,
-      participants._id?.toString(),
+      participant._id?.toString(),
       ChatEventEnum.NEW_CHAT_EVENT,
       chat
     );
@@ -224,12 +225,12 @@ const createGroupChat = asyncHandler(async (req, res) => {
 });
 
 const deleteCascadeChatMessage = async (chatId) => {
-  const message = ChatMessage.find({
+  const messages = await ChatMessage.find({
     chat: new mongoose.Types.ObjectId(chatId),
   });
   let attachments = [];
   attachments = attachments.concat(
-    ...message.map((msg) => {
+    ...messages.map((msg) => {
       return msg.attachments;
     })
   );
@@ -301,7 +302,7 @@ const deleteGroupChat = asyncHandler(async (req, res) => {
   await Chat.findByIdAndDelete(chatId);
   await deleteCascadeChatMessage(chatId);
 
-  chat?.participant?.forEach((participant) => {
+  chat?.participant._id?.forEach((participant) => {
     if (participant._id.toString() !== req.user._id.toString()) {
       return;
     }
@@ -316,32 +317,40 @@ const deleteGroupChat = asyncHandler(async (req, res) => {
     .status(200)
     .json(new ApiResponse(200, "Successfully deleted chat", {}));
 });
-
+///////////////////////////////////////////////////////////////////////////////////////////////////
 const deleteOneOnOneChat = asyncHandler(async (req, res) => {
   const { chatId } = req.params;
 
-  const chat = await Chat.aggregate({
-    $match: {
-      _id: new mongoose.Types.ObjectId(chatId),
-      isGroupChat: true,
-      ...chatAggregation(),
+  const chat = await Chat.aggregate([
+    {
+      $match: {
+        _id: new mongoose.Types.ObjectId(chatId),
+        isGroupChat: false,
+      },
     },
-  });
+    ...chatAggregation(),
+  ]);
+
   const payload = chat[0];
   if (!payload) {
     throw new ApiError(404, "Chat does not exits");
   }
 
   await Chat.findByIdAndDelete(chatId); //delete chat even if user is not admin because it's personal chat
-  await deleteCascadeChatMessage(chatId); //delete attachments
+  const isMessages = await ChatMessage.findOne({
+    chat: new mongoose.Types.ObjectId(chatId),
+  });
+  if (isMessages?.chat) {
+    await deleteCascadeChatMessage(chatId); //delete attachments
+  }
 
   const otherParticipant = payload?.participants?.find((participant) => {
-    participant?._id.toString() !== req.user._id.toString();
+    participant?.toString() !== req.user._id.toString();
   });
 
   emitMessage(
     req,
-    otherParticipant._id?.toString(),
+    otherParticipant?.toString(),
     ChatEventEnum.LEAVE_CHAT_EVENT,
     payload
   );
@@ -352,15 +361,15 @@ const deleteOneOnOneChat = asyncHandler(async (req, res) => {
 
 const leaveGroupChat = asyncHandler(async (req, res) => {
   const { chatId } = req.params;
-  const chat = await Chat.aggregate({
-    $match: { _id: new mongoose.Types.ObjectId(chatId) },
+  const chat = await Chat.findOne({
+    _id: new mongoose.Types.ObjectId(chatId),
     isGroupChat: true,
   });
 
   if (!chat) {
     throw new ApiError(404, false, "Group chat doesn't exits");
   }
-  const existingUser = chat?.participant;
+  const existingUser = chat?.participants;
   if (!existingUser?.includes(req.user._id)) {
     //to check if user is part of group or not
     throw new ApiError(404, false, "You are not part of this group");
@@ -375,15 +384,15 @@ const leaveGroupChat = asyncHandler(async (req, res) => {
     { new: true }
   );
 
-  const upChat = await Chat.aggregate(
+  const upChat = await Chat.aggregate([
     {
       $match: {
         _id: updatedChat._id,
         isGroupChat: true,
       },
     },
-    ...chatAggregation()
-  );
+    ...chatAggregation(),
+  ]);
   const payLoad = upChat[0];
   if (!payLoad) {
     throw new ApiError(500, false, "Internal server error");
@@ -396,7 +405,8 @@ const leaveGroupChat = asyncHandler(async (req, res) => {
 const addParticipantInGroup = asyncHandler(async (req, res) => {
   const { chatId, participantId } = req.params;
   const chat = await Chat.findOne({
-    $match: { _id: new mongoose.Types.ObjectId(chatId), isGroupChat: true },
+    _id: new mongoose.Types.ObjectId(chatId),
+    isGroupChat: true,
   });
   if (!chat) {
     //if chat present or not
@@ -421,14 +431,14 @@ const addParticipantInGroup = asyncHandler(async (req, res) => {
     },
     { new: true }
   );
-  const upChat = await Chat.aggregate(
+  const upChat = await Chat.aggregate([
     {
       $match: {
         _id: updatedChat._id,
       },
     },
-    ...chatAggregation()
-  );
+    ...chatAggregation(),
+  ]);
   const payload = upChat[0];
   if (!payload) {
     throw new ApiError(500, "Internal server error");
@@ -462,7 +472,7 @@ const removePeronFromGroup = asyncHandler(async (req, res) => {
     chatId,
     {
       $pull: {
-       _id: participantId , 
+        participants: participantId,
       },
     },
     { new: true }

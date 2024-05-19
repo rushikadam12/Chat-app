@@ -81,11 +81,11 @@ const sendMessage = asyncHandler(async (req, res) => {
   if (!chatId) {
     throw new ApiError(404, false, "chatId required required");
   }
-  const selectChat = Chat.findById(chatId);
+  const selectChat =await Chat.findById(chatId);
   if (!selectChat) {
     throw new ApiError(404, false, "chat is not present");
   }
-
+  
   const messageFiles = [];
   if (req.files && req.files?.attachments?.length > 0) {
     req.files.attachments?.map((attachment) => {
@@ -125,13 +125,13 @@ const sendMessage = asyncHandler(async (req, res) => {
   }
   // logic to emit socket event about the new message created to the other participants
 
-  chat.participants.forEach((participantsObjectId) => {
+  chat.participants?.forEach((participantsObjectId) => {
     // here the chat is the raw instance of the chat in which participants is the array of object ids of users
     if (participantsObjectId.toString() === req.user._id.toString()) return;
 
     emitMessage(
       req,
-      participantsObjectId.toString(),
+      participantsObjectId?.toString(),
       ChatEventEnum.MESSAGE_RECEIVED_EVENT,
       receivedMessage
     );
