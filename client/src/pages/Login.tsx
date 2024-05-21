@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 
 import {
@@ -11,74 +11,105 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { ThemeProvider } from "@/components/ui/theme-provider";
 import { SiGooglechat } from "react-icons/si";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { loginPost } from "@/Api call/AxiosInstance";
-import { loginGoogle } from "@/Api call/AxiosInstance";
-import axios from "axios";
+import { authCall, loginPost } from "@/Api call/AxiosInstance";
+import { CircleSpinner } from "react-spinners-kit";
+import { useForm, SubmitHandler } from "react-hook-form";
+import { toast, useToast } from "@/components/ui/use-toast";
+import { ToastAction } from "@/components/ui/toast";
+import { Toaster } from "@/components/ui/toaster";
+type Inputs = {
+  email: string;
+  password: string;
+};
+
 const Login: React.FC = () => {
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<Inputs>();
+  const Navigate = useNavigate();
+  const { toast } = useToast();
   const EmailRef = useRef<HTMLInputElement>(null);
   const PasswordRef = useRef<HTMLInputElement>(null);
-
-  const mutation1 = useMutation({
-    mutationFn: loginPost,
-    onSuccess: (response) => {
-      // Invalidate and refetch
-      console.log(response.data);
-    },
-    onError: (error) => {
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const onSubmit: SubmitHandler<Inputs> = async (data) => {
+    setIsLoading(true);
+    try {
+      await LoginMutate.mutateAsync(data);
+    } catch (error) {
       console.log(error);
-    },
-  });
-  const mutation2 = useMutation({
-    mutationFn: loginGoogle,
-    onSuccess: (response) => {
-      // Invalidate and refetch
-      console.log(response.data);
-    },
-    onError: (error) => {
-      console.log(error);
-    },
-  });
-  const handelSubmit = () => {
-    const email = EmailRef.current?.value;
-    const password = PasswordRef.current?.value;
-    if (!email || !password) {
-      return alert("Pls enter your email and password");
+    } finally {
+      setIsLoading(false);
     }
-    mutation1.mutate({ email, password });
   };
-  const handelGoogleSubmit = async () => {
-    console.log(import.meta.env.VITE_URL);
-    await window.open(
-      `${import.meta.env.VITE_URL}/passport/google`,
-      "_self"
-    );
-  };
-  useEffect(() => {
-    const fetchGoogleUser = async () => {
-      const source = axios.CancelToken.source();
-      try {
-        const resp = await axios.get(
-          `${import.meta.env.VITE_URL}/passport/login/success`,
-          { withCredentials: true, cancelToken: source.token }
-        );
-        console.log(resp);
-      } catch (error) {
-        console.log(error);
+
+  const LoginMutate = useMutation({
+    mutationFn: loginPost,
+    onSuccess: async (response) => {
+      // Invalidate and refetch
+      
+      console.log(response.data);
+      Navigate("/chat-app/home");
+      toast({
+        variant: "destructive",
+        title:  "Uh oh! Something went wrong.",
+        description: "There was a problem with your request.",
+        action: <ToastAction altText="Try again">Try again</ToastAction>,
+      });
+      setIsLoading(false);
+    },
+    onError: (error) => {
+      console.log(error);
+      
+    },
+  });
+  const authMutation = useMutation({
+    mutationFn: authCall,
+    onSuccess: (response) => {
+      // Invalidate and refetch
+      if (response.data.data.auth) {
+        Navigate("/chat-app/home");
+      } else {
+        Navigate("/");
       }
-      return () => {
-        source.cancel("Operation canceled by the user.");
-      };
-    };
-    fetchGoogleUser();
-  }, []);
+    },
+    onError: (error) => {
+      console.log(error);
+      Navigate("/");
+    },
+  });
+  // const handelSubmit = () => {
+  //   const email = EmailRef.current?.value;
+  //   const password = PasswordRef.current?.value;
+  //   if (!email || !password) {
+  //     return alert("Pls enter your email and password");
+  //   }
+  //   mutation1.mutate({ email, password });
+  // };
+  const handelGoogleSubmit = async () => {
+    try {
+      await window.open(`${import.meta.env.VITE_URL}/passport/google`, "_self");
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  useEffect(() => {
+    authMutation.mutate();
+  }, [Navigate]);
+
   return (
     <>
       <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
-        <section className="flex justify-center items-center h-screen flex-col">
+        <form
+          className="flex justify-center items-center h-screen flex-col"
+          onSubmit={handleSubmit(onSubmit)}
+        >
           <div className="py-8 w-fit">
             <p className="text-4xl flex gap-2 font-semibold">
               <SiGooglechat size={40} />
@@ -96,26 +127,43 @@ const Login: React.FC = () => {
               <div className="grid gap-2">
                 <Label htmlFor="email">Email</Label>
                 <Input
-                  ref={EmailRef}
+                  // ref={EmailRef}
                   id="email"
                   type="email"
                   placeholder="ConverseSphere@example.com"
-                  required
+                  {...register("email", {
+                    required: "Email is required",
+                    pattern: {
+                      value: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+                      message: "Invalid email address",
+                    },
+                  })}
                 />
+                {errors.email && (
+                  <span className="text-red-500">{errors.email.message}</span>
+                )}
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="password">Password</Label>
                 <Input
-                  ref={PasswordRef}
+                  // ref={PasswordRef}
+                  {...register("password", {
+                    required: "Password is required",
+                    minLength: { value: 6, message: "Password is too short" },
+                  })}
                   id="password"
                   type="password"
-                  required
                 />
+                {errors.password && (
+                  <span className="text-red-500 ">
+                    {errors.password.message}
+                  </span>
+                )}
               </div>
             </CardContent>
             <CardFooter className="flex flex-col gap-2">
-              <Button className="w-full" onClick={handelSubmit}>
-                Sign in
+              <Button className="w-full" disabled={isLoading} type="submit">
+                {isLoading ? <CircleSpinner size={25} /> : "SignIn"}
               </Button>
               <Button
                 className="w-full bg-slate-500 hover:bg-slate-400"
@@ -131,7 +179,7 @@ const Login: React.FC = () => {
               </div>
             </CardFooter>
           </Card>
-        </section>
+        </form>
       </ThemeProvider>
     </>
   );

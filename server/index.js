@@ -29,6 +29,7 @@ app.use(express.json());
 app.use(
   cors({
     origin: "http://localhost:5173",
+    
     credentials: true,
   })
 );
@@ -40,7 +41,7 @@ app.use(
     secret: "asdwsfdawfqw",
     resave: false,
     saveUninitialized: false,
-    cookie: { secure: false },
+    cookie: { secure: true },
   })
 );
 app.use(passport.initialize());

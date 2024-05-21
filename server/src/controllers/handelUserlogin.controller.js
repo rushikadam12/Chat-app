@@ -14,7 +14,7 @@ const handelLogin = asyncHandler(async (req, res) => {
     .status(201)
     .cookie("accessToken", token, { httpOnly: true, secure: false })
     .cookie("refreshToken",refreshToken,{httpOnly:true,secure:false})
-    .redirect("http://localhost:5173/");;
+    .redirect("http://localhost:5173/chat-app/home");;
 });
 
 module.exports = handelLogin;

@@ -3,8 +3,13 @@ import { SiGooglechat } from "react-icons/si";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ModeToggle } from "./ModeToggle";
 import { useTheme } from "./theme-provider";
-const Navbar = () => {
+import useStore from "@/Zustand/Store";
+import { useState } from "react";
+import UserProfileOption from "./UserProfileOption";
+const Navbar: React.FC = () => {
+  const [isVisible, setIsVisible] = useState<boolean>(false);
   const { theme } = useTheme();
+  const { MenuOption, setText } = useStore();
   return (
     <div
       className={`h-screen fixed flex p-[0.2rem] flex-col  ${
@@ -12,24 +17,36 @@ const Navbar = () => {
       }`}
     >
       <nav className="w-fit flex justify-center  item-center gap-[4rem] flex-col item-center ">
-        <label className="p-2 self-center hover:bg-slate-400 hover:cursor-pointer rounded-md">
+        <label className="p-3 self-center hover:bg-slate-400 hover:cursor-pointer rounded-md">
           <SiGooglechat size={25} />
         </label>
-        {NvabarIcons.map((item) => {
+        {NvabarIcons.map((item, index) => {
           return (
-            <li className="w-fit flex flex-col items-center justify-center hover:bg-red-600 hover:cursor-pointer rounded-sm p-2">
-              <item.element size={30} />
+            <li
+              className={`w-fit flex flex-col items-center justify-center hover:bg-slate-500 hover:cursor-pointer rounded-sm p-2 self-center ${
+                MenuOption === item.name ? "bg-slate-800" : "bg-transparent"
+              }`}
+              onClick={() => {
+                setText(item.name);
+              }}
+            >
+              <item.element key={index} size={30} />
             </li>
           );
         })}
       </nav>
 
-      <div className="h-full flex justify-center items-center flex-col gap-12">
+      <div className="h-full flex justify-center items-center flex-col gap-14 ">
         <ModeToggle />
-        <Avatar className=" hover:cursor-pointer">
-          <AvatarImage src="https://github.com/shadcn.png" />
-          <AvatarFallback>CN</AvatarFallback>
-        </Avatar>
+        <UserProfileOption>
+          <Avatar
+            className=" hover:cursor-pointer "
+            onClick={() => setIsVisible(!isVisible)}
+          >
+            <AvatarImage src="https://github.com/shadcn.png" />
+            <AvatarFallback>CN</AvatarFallback>
+          </Avatar>
+        </UserProfileOption>
       </div>
     </div>
   );

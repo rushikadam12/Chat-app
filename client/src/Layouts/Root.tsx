@@ -1,7 +1,8 @@
-import { Outlet } from "react-router-dom";
+import { Outlet, useNavigate } from "react-router-dom";
 import { ThemeProvider } from "@/components/ui/theme-provider";
 import Navbar from "@/components/ui/Navbar";
 import Footer from "@/pages/Footer";
+
 const RootLayout = () => {
   return (
     <>
@@ -12,6 +13,7 @@ const RootLayout = () => {
           </header>
           <main className="ml-12 px-1">
             <Outlet />
+            
           </main>
           <footer className="border-2">
             <Footer />

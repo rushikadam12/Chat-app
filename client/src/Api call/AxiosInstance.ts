@@ -1,15 +1,29 @@
 import axios from "axios";
 
-const instance = axios.create({
+export const AxiosInstance = axios.create({
   baseURL: `${import.meta.env.VITE_URL}`,
-  timeout: 2000,
+  timeout: 3000,
 });
 
 export const loginPost = async (data: { email: string; password: string }) => {
   const { email, password } = data;
-  return instance.post("/login", { email, password });
+  return AxiosInstance.post(
+    "/login",
+    { email, password },
+    { withCredentials: true }
+  );
 };
 
 export const loginGoogle = async () => {
-  return instance.get("/passport/google");
+  return AxiosInstance.get("/passport/google");
+};
+
+export const authCall = async () => {
+  return AxiosInstance.get("/login/auth", {
+    withCredentials: true,
+  });
+};
+
+export const LogOut = async () => {
+  return AxiosInstance.get("/login/logout", { withCredentials: true });
 };

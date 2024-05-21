@@ -3,19 +3,35 @@ import Login from "./pages/Login";
 import RootLayout from "./Layouts/Root";
 import Home from "./pages/Home";
 import RegisterPage from "./pages/Register";
+import ProtectedRoutes from "./Layouts/ProtectedRoutes";
+
 const router = createBrowserRouter([
   {
     path: "/",
     element: <Login />,
   },
+
   {
     path: "/signup",
     element: <RegisterPage />,
   },
   {
     path: "/chat-app",
-    element: <RootLayout />,
-    children: [{ path: "home", element: <Home /> }],
+    element: (
+      <ProtectedRoutes>
+        <RootLayout />
+      </ProtectedRoutes>
+    ),
+    children: [
+      {
+        path: "home",
+        element: <Home />,
+      },
+    ],
+  },
+  {
+    path: "*",
+    element: <div>404 not found</div>,
   },
 ]);
 

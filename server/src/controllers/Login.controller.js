@@ -29,7 +29,7 @@ const UserLogin = asyncHandler(async (req, res) => {
   const loggedUser = await User.findOne({ _id: user._id }).select("-password");
   const options = {
     httpOnly: true,
-    secure: true,
+    secure: false,
     expiresIn: process.env.EXPIRE,
   };
   if (token && RefreshToken) {

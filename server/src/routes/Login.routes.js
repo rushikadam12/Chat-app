@@ -6,9 +6,12 @@ const UserLogin = require("../controllers/Login.controller.js");
 const Logout = require("../controllers/Logout.controller.js");
 const verifyJWT = require("../middleware/verifyJWT.middlewares.js");
 const AccessRefreshToken = require("../controllers/AccessRefreshToken.js");
+const userAuth = require("../controllers/UserAuth.js");
 
 router.route("/").post(userLogin(), validator, UserLogin);
+
 router.route("/logout").get(verifyJWT, Logout);
+router.route("/auth").get(verifyJWT, userAuth);
 router.route("/refresh-token").post(AccessRefreshToken);
 
 //1.user data will validate first
