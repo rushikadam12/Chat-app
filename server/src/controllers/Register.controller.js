@@ -18,7 +18,7 @@ const Register = asyncHandler(async (req, res) => {
   const result = await createuser.save();
   console.log(result);
   if (result) {
-    return res.send(new ApiResponse(200, "data added successfully", result));
+    return res.send(new ApiResponse(200, "data added successfully", result.message));
   }
 });
 

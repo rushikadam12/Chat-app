@@ -1,6 +1,6 @@
 interface IProfileLabel {
-  dataName: string;
-  value: string;
+  dataName: string|null;
+  value: string|null|number;
 }
 
 const ProfileLabel = ({ dataName, value }: IProfileLabel) => {

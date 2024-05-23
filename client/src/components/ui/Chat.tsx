@@ -1,7 +1,51 @@
 import { IoSearch } from "react-icons/io5";
 import AvatarBox from "./avatarBox";
 import UserChatProfile from "./UserChatProfile";
+import { useQuery } from "@tanstack/react-query";
+import { ChatList } from "@/Api call/AxiosInstance";
+import { IAvailableUser } from "@/interfaces/AllUser";
+import { Skeleton } from "./skeleton";
+import useChatStore from "@/Zustand/useChatStore";
+import useUserIdStore from "@/Zustand/useUserIdStore";
 const Chat = () => {
+  const { setUserId, userId } = useUserIdStore();
+
+  const FetchUsers = async () => {
+    try {
+      const resp = await ChatList();
+      if (resp.status === 200) {
+        console.log(await resp.data.data);
+
+        return await resp.data.data;
+      }
+    } catch (error) {
+      console.log(error);
+      throw error;
+    }
+  };
+
+  const {
+    data: availabelUsers,
+    error,
+    isLoading,
+    isSuccess,
+  } = useQuery<IAvailableUser[], Error>({
+    queryKey: ["UserData"],
+    queryFn: FetchUsers,
+  });
+  if (isLoading) {
+    return (
+      <>
+        <h2>Loading...</h2>
+      </>
+    );
+  }
+
+  if (error) {
+    console.log(error);
+  }
+ 
+
   return (
     <>
       <div className="w-full h-full">
@@ -16,7 +60,7 @@ const Chat = () => {
           <input
             type="text"
             className="p-2 w-full min-h-[2rem] bg-slate-600 rounded-r-md outline-none"
-            placeholder="Search groups...."
+            placeholder="Search users...."
           />
         </div>
         <div className="w-full overflow-x-auto flex hideScrollBar">
@@ -27,17 +71,24 @@ const Chat = () => {
         </div>
         <label className="text-lg  p-2 font-semibold">Recent</label>
         <div className="w-full overflow-y-visible hideScrollBar ">
-          <UserChatProfile />
-          <UserChatProfile />
-          <UserChatProfile />
-          <UserChatProfile />
-          <UserChatProfile />
-          <UserChatProfile />
-          <UserChatProfile />
-          <UserChatProfile />
-          <UserChatProfile />
-          <UserChatProfile />
-          <UserChatProfile />
+          {availabelUsers?.map((user: IAvailableUser, index: null | number) => {
+            return (
+              <>
+                <li
+                  className="w-full p-1 border-b-2 hover:bg-slate-800 list-none hover:cursor-pointer"
+                  onClick={() => setUserId(user._id)}
+                >
+                  <UserChatProfile
+                    key={index}
+                    avatar={user.avatar}
+                    email={user.email}
+                    username={user.username}
+                    _id={user._id}
+                  />
+                </li>
+              </>
+            );
+          })}
         </div>
       </div>
     </>

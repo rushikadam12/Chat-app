@@ -20,12 +20,14 @@ const router = createBrowserRouter([
     element: (
       <ProtectedRoutes>
         <RootLayout />
+        
       </ProtectedRoutes>
     ),
     children: [
       {
         path: "home",
         element: <Home />,
+        errorElement:<><div>404 not found</div></>
       },
     ],
   },

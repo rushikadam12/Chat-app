@@ -5,7 +5,7 @@ import Messages from "@/components/ui/Messages";
 
 import useStore from "@/Zustand/Store";
 import { MenuOptionType } from "@/Zustand/Store"; 
-
+import { Toaster } from "sonner";
 const Home: React.FC = () => {
   const { MenuOption } = useStore();
   const MenuComponent: Record<MenuOptionType, JSX.Element> = {
@@ -16,6 +16,7 @@ const Home: React.FC = () => {
 
   return (
     <div className="w-full h-screen flex px-1">
+      <Toaster position="bottom-right" />
       <div className="w-full max-w-sm overflow-scroll hideScrollBar  hide_scroll_bar scroll-smooth">
         {MenuOption && MenuComponent[MenuOption]}
       </div>

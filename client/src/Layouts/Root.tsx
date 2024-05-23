@@ -1,4 +1,4 @@
-import { Outlet, useNavigate } from "react-router-dom";
+import { Outlet } from "react-router-dom";
 import { ThemeProvider } from "@/components/ui/theme-provider";
 import Navbar from "@/components/ui/Navbar";
 import Footer from "@/pages/Footer";

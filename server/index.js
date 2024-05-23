@@ -15,7 +15,7 @@ const cors = require("cors");
 const Register = require("./src/routes/Register.routes");
 const UserLogin = require("./src/routes/Login.routes");
 const passportLogin = require("./src/routes/passport.routes");
-const socketInitialization = require("./src/socket/Socket");
+const {socketInitialization} = require("./src/socket/Socket");
 const chatRouter = require("./src/routes/chat.routes");
 const messageRouter = require("./src/routes/message.routes");
 const errorHandler = require("./src/middleware/errorHandler");
@@ -28,8 +28,7 @@ app.use(express.json());
 
 app.use(
   cors({
-    origin: "http://localhost:5173",
-    
+    origin: process.env.CLIENT,
     credentials: true,
   })
 );
@@ -38,7 +37,7 @@ app.use(cookieParser());
 
 app.use(
   session({
-    secret: "asdwsfdawfqw",
+    secret: process.env.SESSION_KEY,
     resave: false,
     saveUninitialized: false,
     cookie: { secure: true },
@@ -80,6 +79,8 @@ app.use("/api/v1/login", UserLogin);
 app.use("/api/v1/passport", passportLogin);
 app.use("/api/v1/chat-app/chats", chatRouter);
 app.use("/api/v1/chat-app/messages", messageRouter);
+
+socketInitialization(io);
 
 io.on("connect", (socket) => {
   console.log("A user connected");

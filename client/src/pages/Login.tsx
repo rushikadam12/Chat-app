@@ -34,8 +34,6 @@ const Login: React.FC = () => {
   } = useForm<Inputs>();
   const Navigate = useNavigate();
   const { toast } = useToast();
-  const EmailRef = useRef<HTMLInputElement>(null);
-  const PasswordRef = useRef<HTMLInputElement>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const onSubmit: SubmitHandler<Inputs> = async (data) => {
     setIsLoading(true);
@@ -52,20 +50,20 @@ const Login: React.FC = () => {
     mutationFn: loginPost,
     onSuccess: async (response) => {
       // Invalidate and refetch
-      
+
       console.log(response.data);
       Navigate("/chat-app/home");
-      toast({
-        variant: "destructive",
-        title:  "Uh oh! Something went wrong.",
-        description: "There was a problem with your request.",
-        action: <ToastAction altText="Try again">Try again</ToastAction>,
-      });
+
       setIsLoading(false);
     },
     onError: (error) => {
       console.log(error);
-      
+      toast({
+        variant: "destructive",
+        title: "Uh oh! Something went wrong.",
+        description: error.message || "There was a problem with your request.",
+        action: <ToastAction altText="Try again">Try again</ToastAction>,
+      });
     },
   });
   const authMutation = useMutation({
@@ -127,7 +125,6 @@ const Login: React.FC = () => {
               <div className="grid gap-2">
                 <Label htmlFor="email">Email</Label>
                 <Input
-                  // ref={EmailRef}
                   id="email"
                   type="email"
                   placeholder="ConverseSphere@example.com"
@@ -146,7 +143,6 @@ const Login: React.FC = () => {
               <div className="grid gap-2">
                 <Label htmlFor="password">Password</Label>
                 <Input
-                  // ref={PasswordRef}
                   {...register("password", {
                     required: "Password is required",
                     minLength: { value: 6, message: "Password is too short" },
@@ -167,6 +163,7 @@ const Login: React.FC = () => {
               </Button>
               <Button
                 className="w-full bg-slate-500 hover:bg-slate-400"
+                type="button"
                 onClick={handelGoogleSubmit}
               >
                 Sign in with Google

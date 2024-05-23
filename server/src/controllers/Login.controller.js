@@ -33,6 +33,7 @@ const UserLogin = asyncHandler(async (req, res) => {
     expiresIn: process.env.EXPIRE,
   };
   if (token && RefreshToken) {
+    console.log(loggedUser)
     return res
       .cookie(
         //set cookie

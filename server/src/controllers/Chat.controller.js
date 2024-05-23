@@ -149,7 +149,7 @@ const OnetoOneChat = asyncHandler(async (req, res) => {
   });
   return res
     .status(200)
-    .json(new ApiResponse(200, "Chat retrieved successfully", payload));
+    .json(new ApiResponse(200, "Chat retrieved created", payload));
 });
 
 const getAllChat = asyncHandler(async (req, res) => {

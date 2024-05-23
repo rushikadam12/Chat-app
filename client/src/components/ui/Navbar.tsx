@@ -6,10 +6,13 @@ import { useTheme } from "./theme-provider";
 import useStore from "@/Zustand/Store";
 import { useState } from "react";
 import UserProfileOption from "./UserProfileOption";
+import useAuthStore from "@/Zustand/useAuth";
 const Navbar: React.FC = () => {
   const [isVisible, setIsVisible] = useState<boolean>(false);
   const { theme } = useTheme();
   const { MenuOption, setText } = useStore();
+  const {User}=useAuthStore()
+  
   return (
     <div
       className={`h-screen fixed flex p-[0.2rem] flex-col  ${
@@ -43,7 +46,7 @@ const Navbar: React.FC = () => {
             className=" hover:cursor-pointer "
             onClick={() => setIsVisible(!isVisible)}
           >
-            <AvatarImage src="https://github.com/shadcn.png" />
+            <AvatarImage src={User?.avatar} />
             <AvatarFallback>CN</AvatarFallback>
           </Avatar>
         </UserProfileOption>
