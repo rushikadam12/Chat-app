@@ -4,15 +4,22 @@ import Chat from "@/components/ui/Chat";
 import Messages from "@/components/ui/Messages";
 
 import useStore from "@/Zustand/Store";
-import { MenuOptionType } from "@/Zustand/Store"; 
+import { MenuOptionType } from "@/Zustand/Store";
 import { Toaster } from "sonner";
+import { useEffect } from "react";
+
+// import useSocketStore from "@/Zustand/useSocketStore";
+
 const Home: React.FC = () => {
   const { MenuOption } = useStore();
+  
+  // const { connect, disconnect } = useSocketStore();
   const MenuComponent: Record<MenuOptionType, JSX.Element> = {
     Chat: <Chat />,
     Group: <GroupChat />,
     User: <Profile />,
   };
+ 
 
   return (
     <div className="w-full h-screen flex px-1">

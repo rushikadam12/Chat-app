@@ -11,12 +11,16 @@ import axios from "axios";
 import React from "react";
 import MessageLeft from "./messageLeft";
 import MessageRight from "./messageRight";
+// import useSocketStore from "@/Zustand/useSocketStore";
+
 const Messages = () => {
   const [click, setOnClick] = useState<boolean>(false);
-  const [Usermessage, setUserMessage] = useState<string>("");
+  const [UserMessage, setUserMessage] = useState<string>("");
   const [showMessage, setShowUserMessage] = useState<any>([]);
+  const [refetch, setrefetch] = useState<boolean>(false);
   const { userId } = useUserIdStore();
   const { chatId, setChatId } = useChatStore();
+  // const { sendMessage, messages } = useSocketStore();
 
   const fetchSendMessage = async () => {
     try {
@@ -25,12 +29,16 @@ const Messages = () => {
       }
       const resp = await AxiosInstance.post(
         `chat-app/messages/${chatId}`,
-        { content: Usermessage },
+        { content: UserMessage },
         {
           withCredentials: true,
         }
       );
-      console.log(await resp.data);
+
+      if (resp.status === 200) {
+        setrefetch(!refetch);
+        console.log(await resp.data);
+      }
     } catch (error) {
       console.log(error);
     }
@@ -47,7 +55,7 @@ const Messages = () => {
       );
 
       console.log(await resp.data);
-      setChatId(await resp.data.data._id);
+      // setChatId(await resp.data.data._id);
     } catch (error) {
       // console.log(userId);
       console.log(error);
@@ -77,7 +85,7 @@ const Messages = () => {
       }
     }
     callFetchMessage();
-  }, [chatId]);
+  }, [chatId, refetch]);
 
   useEffect(() => {
     async function CallFetch() {
@@ -130,7 +138,7 @@ const Messages = () => {
             <UserMessageMenu />
           </div>
         </div>
-        <div className="h-full w-full p-2 flex flex-col gap-2">
+        <div className="h-[80%] w-full p-2 flex flex-col gap-2 overflow-scroll  py-5">
           {showMessage?.map((msg: any) => {
             if (msg.sender._id === userId) {
               // Render message sent by the current user on the right side
@@ -149,6 +157,7 @@ const Messages = () => {
             className="p-2 rounded-md  bg-slate-700 outline-none flex-1"
             onChange={(e) => {
               setUserMessage(e.target.value);
+              // sendMessage(UserMessage);
             }}
           />
           <div className="w-fit flex gap-5">

@@ -7,9 +7,30 @@ import { IAvailableUser } from "@/interfaces/AllUser";
 import { Skeleton } from "./skeleton";
 import useChatStore from "@/Zustand/useChatStore";
 import useUserIdStore from "@/Zustand/useUserIdStore";
+
+import { useContext, useEffect, useState } from "react";
+// import { useSocket } from "@/context/SocketConext";
+// import useSocketStore from "@/Zustand/useSocketStore";
+
+const CONNECTED_EVENT = "connected";
+const DISCONNECT_EVENT = "disconnect";
+const JOIN_CHAT_EVENT = "joinChat";
+const NEW_CHAT_EVENT = "newChat";
+const TYPING_EVENT = "typing";
+const STOP_TYPING_EVENT = "stopTyping";
+const MESSAGE_RECEIVED_EVENT = "messageReceived";
+const LEAVE_CHAT_EVENT = "leaveChat";
+const UPDATE_GROUP_NAME_EVENT = "updateGroupName";
+const MESSAGE_DELETE_EVENT = "messageDeleted";
+import { useSocket } from "@/context/socketContext";
 const Chat = () => {
   const { setUserId, userId } = useUserIdStore();
+  const { socket } = useSocket();
+  // const [isConnected, setIsConnected] = useState(false);
+  const [connection, setConnection] = useState(false);
 
+  // const { chatId }
+  // const { socket } = useSocket();
   const FetchUsers = async () => {
     try {
       const resp = await ChatList();
@@ -33,6 +54,23 @@ const Chat = () => {
     queryKey: ["UserData"],
     queryFn: FetchUsers,
   });
+
+ useEffect(() => {
+   if (!socket) {
+     return;
+   }
+   socket.on("connect", () => {
+     console.log("Client side socket:" + socket.id);
+   });
+   socket.on("disconnect", () => {
+     socket.removeAllListeners();
+   });
+   return () => {
+     socket.off("connect");
+     socket.off("disconnect");
+   };
+ }, [socket]);
+
   if (isLoading) {
     return (
       <>
@@ -44,7 +82,6 @@ const Chat = () => {
   if (error) {
     console.log(error);
   }
- 
 
   return (
     <>

@@ -21,6 +21,7 @@ import { useForm, SubmitHandler } from "react-hook-form";
 import { toast, useToast } from "@/components/ui/use-toast";
 import { ToastAction } from "@/components/ui/toast";
 import { Toaster } from "@/components/ui/toaster";
+
 type Inputs = {
   email: string;
   password: string;
@@ -52,6 +53,7 @@ const Login: React.FC = () => {
       // Invalidate and refetch
 
       console.log(response.data);
+      // localStorage.setItem("token", await response.data.data.accessToken);
       Navigate("/chat-app/home");
 
       setIsLoading(false);
@@ -81,19 +83,18 @@ const Login: React.FC = () => {
       Navigate("/");
     },
   });
-  // const handelSubmit = () => {
-  //   const email = EmailRef.current?.value;
-  //   const password = PasswordRef.current?.value;
-  //   if (!email || !password) {
-  //     return alert("Pls enter your email and password");
-  //   }
-  //   mutation1.mutate({ email, password });
-  // };
+
   const handelGoogleSubmit = async () => {
     try {
       await window.open(`${import.meta.env.VITE_URL}/passport/google`, "_self");
     } catch (error) {
       console.log(error);
+      toast({
+        variant: "destructive",
+        title: "Uh oh! Something went wrong.",
+        description: "There was a problem with your request.",
+        action: <ToastAction altText="Try again">Try again</ToastAction>,
+      });
     }
   };
 

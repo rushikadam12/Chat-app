@@ -6,7 +6,7 @@ const userAuth = asyncHandler(async (req, res) => {
   const loggedUser = await User.findById(req.user?._id).select(
     "-refreshToken -password -updatedAt"
   );
-
+    
   return res
     .status(200)
     .send(

@@ -1,18 +1,31 @@
 require("dotenv").config();
-const cookie = require("cookie-parser");
+const cookie = require('cookie')
 const jwt = require("jsonwebtoken");
 const ApiError = require("../utility/ApiError");
 const User = require("../models/user.model");
-const CONST_EVENT = require("./constants");
+const ChatEventEnum = require("./constants");
 
 const socketInitialization = (io) => {
+  const mountJoinChatEvent = (socket) => {
+    socket.on(ChatEventEnum.JOIN_EVENT, (chatId) => {
+      console.log(`User joined the chat 🤝. chatId: `, chatId);
+      // joining the room with the chatId will allow specific events to be fired where we don't bother about the users like typing events
+      // E.g. When user types we don't want to emit that event to specific participant.
+      // We want to just emit that to the chat where the typing is happening
+      socket.join(chatId);
+    });
+  };
+
   io.on("connection", async (socket) => {
     try {
       // extracting token here from cookie in headers
-      const cookies = cookie.parser(socket.handshake.headers?.cookie || "");
+      const socketId = socket.id
+      console.log("Socket connected with ID:", socketId)
 
-      let token = cookies.accessToken;
-
+      const cookies = cookie.parse(socket.handshake.headers?.cookie || "");
+      console.log(cookies)
+      let token = cookies?.accessToken;
+        
       if (!token) {
         token = socket.handshake.auth?.token;
         // If there is no access token in cookies. Check inside the handshake auth
@@ -31,19 +44,21 @@ const socketInitialization = (io) => {
       }
 
       socket.user = user;
+      socket.join(user._id.toString());
+      socket.emit(ChatEventEnum.CONNECT_EVENT);
+      console.log("connection is created user_ID:", user?._id.toString());
 
-      socket.emit(CONST_EVENT.CONNECT_EVENT);
-      console.log("connection is created user_ID:", socket.user?._id);
+      mountJoinChatEvent(socket);
 
-      socket.on(CONST_EVENT.DISCONNECT_EVENT, () => {
-        console.log("User has disconnected:");
+      socket.on(ChatEventEnum.DISCONNECT_EVENT, () => {
+        console.log("User has disconnected:"+socket.user?._id);
         if (socket.user?._id) {
           socket.leave(socket.user?._id);
         }
       });
     } catch (error) {
       console.log(error);
-      socket.emit(CONST_EVENT.SOCKET_EVENT, () => {
+      socket.emit(ChatEventEnum.SOCKET_EVENT, () => {
         console.log(error?.message || "something went wong with sockets");
       });
     }

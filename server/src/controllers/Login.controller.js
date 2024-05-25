@@ -33,7 +33,7 @@ const UserLogin = asyncHandler(async (req, res) => {
     expiresIn: process.env.EXPIRE,
   };
   if (token && RefreshToken) {
-    console.log(loggedUser)
+    console.log(loggedUser);
     return res
       .cookie(
         //set cookie
@@ -42,7 +42,14 @@ const UserLogin = asyncHandler(async (req, res) => {
         options
       )
       .cookie("refreshToken", RefreshToken, options) //refreshToken
-      .json(new ApiResponse(200, "user logged in successfully", loggedUser));
+      .json(
+        new ApiResponse(
+          200,
+          "user logged in successfully",
+          { loggedUser,accessToken:token},
+          true
+        )
+      );
   } else {
     throw new ApiError(422, false, "token generation problem");
   }
