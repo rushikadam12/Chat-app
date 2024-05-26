@@ -12,7 +12,7 @@ import React from "react";
 import MessageLeft from "./messageLeft";
 import MessageRight from "./messageRight";
 // import useSocketStore from "@/Zustand/useSocketStore";
-
+import { SocketProvider } from "@/context/socketContext";
 const Messages = () => {
   const [click, setOnClick] = useState<boolean>(false);
   const [UserMessage, setUserMessage] = useState<string>("");

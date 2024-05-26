@@ -4,19 +4,17 @@ const jwt = require("jsonwebtoken");
 const ApiError = require("../utility/ApiError");
 const User = require("../models/user.model");
 const ChatEventEnum = require("./constants");
-
+const mountJoinChatEvent = (socket) => {
+  socket.on(ChatEventEnum.JOIN_EVENT, (chatId) => {
+    console.log(`User joined the chat 🤝. chatId: `, chatId);
+    // joining the room with the chatId will allow specific events to be fired where we don't bother about the users like typing events
+    // E.g. When user types we don't want to emit that event to specific participant.
+    // We want to just emit that to the chat where the typing is happening
+    socket.join(chatId);
+  });
+};
 const socketInitialization = (io) => {
-  const mountJoinChatEvent = (socket) => {
-    socket.on(ChatEventEnum.JOIN_EVENT, (chatId) => {
-      console.log(`User joined the chat 🤝. chatId: `, chatId);
-      // joining the room with the chatId will allow specific events to be fired where we don't bother about the users like typing events
-      // E.g. When user types we don't want to emit that event to specific participant.
-      // We want to just emit that to the chat where the typing is happening
-      socket.join(chatId);
-    });
-  };
-
-  io.on("connection", async (socket) => {
+  return io.on("connection", async (socket) => {
     try {
       // extracting token here from cookie in headers
       const socketId = socket.id;
@@ -54,7 +52,7 @@ const socketInitialization = (io) => {
         console.log("User has disconnected:" + socket.user?._id);
         if (socket.user?._id) {
           socket.leave(socket.user?._id);
-        } 
+        }
       });
     } catch (error) {
       console.log(error);
