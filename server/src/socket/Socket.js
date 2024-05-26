@@ -1,5 +1,5 @@
 require("dotenv").config();
-const cookie = require('cookie')
+const cookie = require("cookie");
 const jwt = require("jsonwebtoken");
 const ApiError = require("../utility/ApiError");
 const User = require("../models/user.model");
@@ -19,13 +19,13 @@ const socketInitialization = (io) => {
   io.on("connection", async (socket) => {
     try {
       // extracting token here from cookie in headers
-      const socketId = socket.id
-      console.log("Socket connected with ID:", socketId)
+      const socketId = socket.id;
+      console.log("Socket connected with ID:", socketId);
 
       const cookies = cookie.parse(socket.handshake.headers?.cookie || "");
-      console.log(cookies)
+      console.log(cookies);
       let token = cookies?.accessToken;
-        
+
       if (!token) {
         token = socket.handshake.auth?.token;
         // If there is no access token in cookies. Check inside the handshake auth
@@ -36,7 +36,7 @@ const socketInitialization = (io) => {
       const decode = jwt.verify(token, process.env.SEC_KEY);
 
       const user = await User.findById(decode?._id).select(
-        "-password -username -email"
+        "-password -refreshToken"
       );
 
       if (!user) {
@@ -46,15 +46,15 @@ const socketInitialization = (io) => {
       socket.user = user;
       socket.join(user._id.toString());
       socket.emit(ChatEventEnum.CONNECT_EVENT);
-      console.log("connection is created user_ID:", user?._id.toString());
+      console.log("User connected 🗼. userId:", user?._id.toString());
 
       mountJoinChatEvent(socket);
 
-      socket.on(ChatEventEnum.DISCONNECT_EVENT, () => {
-        console.log("User has disconnected:"+socket.user?._id);
+      socket.on("disconnect", () => {
+        console.log("User has disconnected:" + socket.user?._id);
         if (socket.user?._id) {
           socket.leave(socket.user?._id);
-        }
+        } 
       });
     } catch (error) {
       console.log(error);
