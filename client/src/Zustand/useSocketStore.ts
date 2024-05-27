@@ -1,83 +1,55 @@
-// import { create } from "zustand";
+import { create } from "zustand";
+import io, { Socket } from "socket.io-client";
+interface SocketStore {
+  socket: Socket;
+  roomId: string;
+  username: string;
+  socketId: string;
+  socketUsername: string;
+  setRoomId: (roomId: string) => void;
+  setUsername: (username: string) => void;
+  setSocketId: (socketId: string) => void;
+  setSocketUsername: (socketUsername: string) => void;
+  mountJoinChatEvent: (chatId: string) => void;
+  MessageReceived: (callback: (message: string) => void) => void;
+}
 
-// import io from "socket.io-client";
-// interface Message {
-//   content: string;
-//   sender: {
-//     _id: string;
-//     name: string;
-//   };
-// }
+let socket: Socket;
 
-// interface SocketStore {
-//   socket: any;
-//   isConnected: boolean;
-//   connect: () => void;
-//   disconnect: () => void;
-//   sendMessage: (message: string) => void;
-//   messages: Message[];
-// }
+const useSocketStore = create<SocketStore>((set) => {
+  if (!socket) {
+    socket = io(import.meta.env.VITE_SOCKET_URL, {
+      withCredentials: true,
+    });
+  }
 
-// const ChatEventEnum = Object.freeze({
-//   CONNECT_EVENT: "connect",
-//   DISCONNECT_EVENT: "disconnect",
-//   JOIN_EVENT: "joinChat",
-//   NEW_CHAT_EVENT: "newChat",
-//   MESSAGE_RECEIVED_EVENT: "messageReceived",
-//   SOCKET_EVENT: "socketError",
-//   LEAVE_CHAT_EVENT: "leaveChat",
-// });
+  return {
+    socket,
+    roomId: "",
+    username: "",
+    socketId: "",
+    socketUsername: "",
+    setRoomId: (roomId: string) => {
+      set({ roomId });
+    },
+    setUsername: (username: string) => {
+      set({ username });
+    },
+    setSocketId: (socketId: string) => {
+      set({ socketId });
+    },
+    setSocketUsername: (socketUsername: string) => {
+      set({ socketUsername });
+    },
+    mountJoinChatEvent: (chatId: string) => {
+      socket.emit("joinChat", chatId, (response: string) => {
+        console.log("user joined to chatId:" + response);
+      });
+    },
+    MessageReceived: (callback) => {
+      socket.on("messageReceived", callback);
+    },
+  };
+});
 
-// const useSocketStore = create<SocketStore>((set) => {
-//   let socket: any;
-
-//   const connect = () => {
-//     if (socket && socket.connected) {
-//       return; // Already connected
-//     }
-
-//     socket = io("http://localhost:5122", {
-//       withCredentials: true,
-//     });
-//     socket.connect()
-//     socket.on(ChatEventEnum.CONNECT_EVENT, () => {
-//       console.log("Socket connected with ID:", socket?.id);
-//       set({ socket, isConnected: true });
-//     });
-//      socket.on(ChatEventEnum.DISCONNECT_EVENT, () => {
-//        console.log("Socket connected with ID:", socket?.id);
-//        set({ socket:null, isConnected: false });
-//      });
-//   };
-
-//   const disconnect = () => {
-//     set((state) => {
-//       const { socket } = state;
-//       if (socket) {
-//         socket.disconnect();
-//       }
-//       return { socket: null, isConnected: false };
-//     });
-//   };
-
-//   const sendMessage = (message: string) => {
-//     set((state) => {
-//       const { socket } = state;
-//       if (socket) {
-//         socket.emit(ChatEventEnum.NEW_CHAT_EVENT, message);
-//       }
-//       return state;
-//     });
-//   };
-
-//   return {
-//     socket: null,
-//     isConnected: false,
-//     messages: [],
-//     connect,
-//     disconnect,
-//     sendMessage,
-//   };
-// });
-
-// export default useSocketStore;
+export default useSocketStore;

@@ -12,6 +12,9 @@ const mountJoinChatEvent = (socket) => {
     // We want to just emit that to the chat where the typing is happening
     socket.join(chatId);
   });
+  socket.emit(ChatEventEnum.MESSAGE_RECEIVED_EVENT, (message) => {
+    console.log(message);
+  });
 };
 const socketInitialization = (io) => {
   return io.on("connection", async (socket) => {

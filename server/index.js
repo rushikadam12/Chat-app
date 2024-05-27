@@ -26,13 +26,12 @@ const io = new Server(server, {
   pingTimeout: 60000,
   cors: {
     origin: "http://localhost:5173",
-    methods:["GET","POST"],
+    methods: ["GET", "POST"],
     credentials: true,
   },
 });
 
 app.set("io", io);
-
 
 app.use(
   cors({
@@ -41,7 +40,6 @@ app.use(
   })
 );
 app.use(express.urlencoded({ extended: true, limit: "16kb" }));
-
 
 app.use(
   session({
@@ -88,8 +86,6 @@ app.use("/api/v1/chat-app/chats", chatRouter);
 app.use("/api/v1/chat-app/messages", messageRouter);
 
 socketInitialization(io);
-
-
 
 const startServer = () => {
   server.listen(process.env.PORT || 3000, () => {

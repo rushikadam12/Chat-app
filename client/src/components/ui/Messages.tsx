@@ -11,8 +11,9 @@ import axios from "axios";
 import React from "react";
 import MessageLeft from "./messageLeft";
 import MessageRight from "./messageRight";
+import useSocketStore from "@/Zustand/useSocketStore";
 // import useSocketStore from "@/Zustand/useSocketStore";
-import { SocketProvider } from "@/context/socketContext";
+
 const Messages = () => {
   const [click, setOnClick] = useState<boolean>(false);
   const [UserMessage, setUserMessage] = useState<string>("");
@@ -20,8 +21,12 @@ const Messages = () => {
   const [refetch, setrefetch] = useState<boolean>(false);
   const { userId } = useUserIdStore();
   const { chatId, setChatId } = useChatStore();
-  // const { sendMessage, messages } = useSocketStore();
-
+  const mountJoinChatEvent = useSocketStore(
+    (state: any) => state.mountJoinChatEvent
+  );
+  // const MessageReceived = useSocketStore((state:any)=>state.MessageReceived);
+  
+  const MessageReceived = useSocketStore((state: any) => state.MessageReceived);
   const fetchSendMessage = async () => {
     try {
       if (!userId) {
@@ -37,6 +42,7 @@ const Messages = () => {
 
       if (resp.status === 200) {
         setrefetch(!refetch);
+
         console.log(await resp.data);
       }
     } catch (error) {
@@ -55,7 +61,8 @@ const Messages = () => {
       );
 
       console.log(await resp.data);
-      // setChatId(await resp.data.data._id);
+      setChatId(await resp.data.data._id);
+      
     } catch (error) {
       // console.log(userId);
       console.log(error);
@@ -68,6 +75,7 @@ const Messages = () => {
       });
       console.log(await resp.data);
       setShowUserMessage(resp.data.data);
+      mountJoinChatEvent(chatId);
     } catch (error) {
       console.log(chatId);
       console.log(error);
@@ -79,6 +87,7 @@ const Messages = () => {
       try {
         if (chatId) {
           await fetchMessages();
+          
         }
       } catch (error) {
         console.log(error);
@@ -157,7 +166,6 @@ const Messages = () => {
             className="p-2 rounded-md  bg-slate-700 outline-none flex-1"
             onChange={(e) => {
               setUserMessage(e.target.value);
-              // sendMessage(UserMessage);
             }}
           />
           <div className="w-fit flex gap-5">
@@ -170,7 +178,9 @@ const Messages = () => {
             </label>
             <button
               className="p-2 bg-slate-400 rounded-md outline-none"
-              onClick={fetchSendMessage}
+              onClick={() => {
+                fetchSendMessage(), MessageReceived(UserMessage);
+              }}
             >
               <GrSend size={20} />
             </button>

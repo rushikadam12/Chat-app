@@ -9,27 +9,31 @@ import useChatStore from "@/Zustand/useChatStore";
 import useUserIdStore from "@/Zustand/useUserIdStore";
 
 import { useContext, useEffect, useState } from "react";
-// import { useSocket } from "@/context/SocketConext";
-// import useSocketStore from "@/Zustand/useSocketStore";
 
-// const CONNECTED_EVENT = "connected";
-// const DISCONNECT_EVENT = "disconnect";
-// const JOIN_CHAT_EVENT = "joinChat";
-// const NEW_CHAT_EVENT = "newChat";
-// const TYPING_EVENT = "typing";
-// const STOP_TYPING_EVENT = "stopTyping";
-// const MESSAGE_RECEIVED_EVENT = "messageReceived";
-// const LEAVE_CHAT_EVENT = "leaveChat";
-// const UPDATE_GROUP_NAME_EVENT = "updateGroupName";
-// const MESSAGE_DELETE_EVENT = "messageDeleted";
+import useSocketStore from "@/Zustand/useSocketStore";
+
+const CONNECTED_EVENT = "connected";
+const DISCONNECT_EVENT = "disconnect";
+const JOIN_CHAT_EVENT = "joinChat";
+const NEW_CHAT_EVENT = "newChat";
+const TYPING_EVENT = "typing";
+const STOP_TYPING_EVENT = "stopTyping";
+const MESSAGE_RECEIVED_EVENT = "messageReceived";
+const LEAVE_CHAT_EVENT = "leaveChat";
+const UPDATE_GROUP_NAME_EVENT = "updateGroupName";
+const MESSAGE_DELETE_EVENT = "messageDeleted";
 const Chat = () => {
   const { setUserId, userId } = useUserIdStore();
   
+
   // const [isConnected, setIsConnected] = useState(false);
   const [connection, setConnection] = useState(false);
 
-  // const { chatId }
-  // const { socket } = useSocket();
+  const mountJoinChatEvent = useSocketStore(
+    (state: any) => state.mountJoinChatEvent
+  );
+  const chatId = useChatStore((state) => state.chatId);
+
   const FetchUsers = async () => {
     try {
       const resp = await ChatList();
@@ -53,8 +57,7 @@ const Chat = () => {
     queryKey: ["UserData"],
     queryFn: FetchUsers,
   });
-
-
+ 
   if (isLoading) {
     return (
       <>
@@ -97,7 +100,9 @@ const Chat = () => {
               <>
                 <li
                   className="w-full p-1 border-b-2 hover:bg-slate-800 list-none hover:cursor-pointer"
-                  onClick={() => setUserId(user._id)}
+                  onClick={() => {
+                    setUserId(user._id), mountJoinChatEvent(chatId);
+                  }}
                 >
                   <UserChatProfile
                     key={index}
