@@ -1,81 +1,81 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import UserMessageMenu from "./UserMessageMenu";
 import { MdSearch } from "react-icons/md";
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { ImAttachment } from "react-icons/im";
 import { GrSend } from "react-icons/gr";
 import useChatStore from "@/Zustand/useChatStore";
 import useUserIdStore from "@/Zustand/useUserIdStore";
-import { AxiosInstance } from "@/Api call/AxiosInstance";
-import axios from "axios";
-import React from "react";
 import MessageLeft from "./messageLeft";
 import MessageRight from "./messageRight";
 import useSocketStore from "@/Zustand/useSocketStore";
-// import useSocketStore from "@/Zustand/useSocketStore";
-
+import {
+  SendMessageReq,
+  fetchChatReq,
+  fetchMessageReq,
+} from "@/Api call/AxiosInstance";
+import useUserProfileStore from "@/Zustand/useUserPofileStore";
+import { User } from "lucide-react";
+import { useMutation } from "@tanstack/react-query";
 const Messages = () => {
   const [click, setOnClick] = useState<boolean>(false);
   const [UserMessage, setUserMessage] = useState<string>("");
-  const [showMessage, setShowUserMessage] = useState<any>([]);
-  const [refetch, setrefetch] = useState<boolean>(false);
+  const [showMessage, setShowUserMessage] = useState<string[]>([]);
+  const { userProfile } = useUserProfileStore();
   const { userId } = useUserIdStore();
   const { chatId, setChatId } = useChatStore();
-  const mountJoinChatEvent = useSocketStore(
-    (state: any) => state.mountJoinChatEvent
-  );
-  // const MessageReceived = useSocketStore((state:any)=>state.MessageReceived);
-  
-  const MessageReceived = useSocketStore((state: any) => state.MessageReceived);
-  const fetchSendMessage = async () => {
+
+  const {
+    sendMessage,
+    receiveMessage,
+    mountJoinChatEvent,
+    removeMessageListener,
+  } = useSocketStore();
+
+  const messageHandler = (data: any[]) => {
+    console.log("Received messages:", data);
+    setShowUserMessage((prev) => [...prev, ...data]);
+    console.log(showMessage);
+  };
+
+  const fetchSendMessage = async (UserMessage: string) => {
     try {
       if (!userId) {
         return console.log("value is null");
       }
-      const resp = await AxiosInstance.post(
-        `chat-app/messages/${chatId}`,
-        { content: UserMessage },
-        {
-          withCredentials: true,
-        }
-      );
-
+      const resp = await SendMessageReq(chatId, UserMessage);
       if (resp.status === 200) {
-        setrefetch(!refetch);
-
-        console.log(await resp.data);
+        setUserMessage("");
+        return resp.data.data;
       }
     } catch (error) {
-      console.log(error);
+      return error;
     }
   };
-
+  const sendMessageMutate = useMutation({
+    mutationFn: (UserMessage: string) => fetchSendMessage(UserMessage),
+    onSuccess: (data) => {
+      setShowUserMessage((prev) => [...prev, data]);
+    },
+    onError: (error) => {
+      console.log(error);
+    },
+  });
   const fetchChats = async () => {
     try {
-      const resp = await axios.post(
-        `http://localhost:5121/api/v1/chat-app/chats/c/${userId}`,
-        {},
-        {
-          withCredentials: true,
-        }
-      );
-
+      const resp = await fetchChatReq(userId);
       console.log(await resp.data);
       setChatId(await resp.data.data._id);
-      
+      mountJoinChatEvent(resp.data.data._id);
     } catch (error) {
-      // console.log(userId);
       console.log(error);
     }
   };
   const fetchMessages = async () => {
     try {
-      const resp = await AxiosInstance.get(`chat-app/messages/${chatId}`, {
-        withCredentials: true,
-      });
+      const resp = await fetchMessageReq(chatId);
       console.log(await resp.data);
       setShowUserMessage(resp.data.data);
-      mountJoinChatEvent(chatId);
     } catch (error) {
       console.log(chatId);
       console.log(error);
@@ -87,14 +87,13 @@ const Messages = () => {
       try {
         if (chatId) {
           await fetchMessages();
-          
         }
       } catch (error) {
         console.log(error);
       }
     }
     callFetchMessage();
-  }, [chatId, refetch]);
+  }, [chatId]);
 
   useEffect(() => {
     async function CallFetch() {
@@ -108,20 +107,38 @@ const Messages = () => {
     }
     CallFetch();
   }, [userId]);
+
+  useEffect(() => {
+    receiveMessage(messageHandler);
+    return () => {
+      removeMessageListener(messageHandler);
+    };
+  }, []);
+
   return (
     <>
       <div className="relative w-full h-full">
         {/* user avatar */}
-        <div className="p-4 bg-slate-800 w-full flex border-2">
+        <div
+          className={
+            showMessage.length === 0
+              ? "hidden"
+              : "p-4 bg-slate-800 w-full flex border-2 "
+          }
+        >
           <div className="w-full flex gap-2">
-            <Avatar className="h-[2.2rem] w-[2.2rem] ">
+            <Avatar className={"h-[2.2rem] w-[2.2rem] "}>
               <AvatarImage
-                src="https://github.com/shadcn.png"
+                src={userProfile?.avatar}
                 alt="userProfile_picture"
               />
-              <AvatarFallback>CN</AvatarFallback>
+              <AvatarFallback>
+                <User />
+              </AvatarFallback>
             </Avatar>
-            <label className="text-lg self-center ">John Doe</label>
+            <label className="text-lg self-center ">
+              {userProfile?.username}
+            </label>
           </div>
 
           <div className="flex items-center gap-2">
@@ -147,14 +164,28 @@ const Messages = () => {
             <UserMessageMenu />
           </div>
         </div>
-        <div className="h-[80%] w-full p-2 flex flex-col gap-2 overflow-scroll  py-5">
+        <div className="h-[80%] w-full p-2 flex flex-col gap-2 overflow-scroll  py-5 hideScrollBar hide_scroll_bar">
+          {/* message display section */}
+          {showMessage.length === 0 && (
+            <h1 className="text-xl  text-center text-slate-200">
+              Start your chat
+            </h1>
+          )}
           {showMessage?.map((msg: any) => {
             if (msg.sender._id === userId) {
               // Render message sent by the current user on the right side
-              return <MessageLeft message={msg.content} />;
+              return (
+                <Fragment key={msg._id}>
+                  <MessageLeft message={msg.content} />
+                </Fragment>
+              );
             } else {
               // Render message sent by other users on the left side
-              return <MessageRight message={msg.content} />;
+              return (
+                <Fragment key={msg._id}>
+                  <MessageRight message={msg.content} />
+                </Fragment>
+              );
             }
           })}
         </div>
@@ -162,6 +193,7 @@ const Messages = () => {
         <div className="w-full px-2 py-4 gap-2 flex border-2  max-w-full justify-between absolute   bottom-0 bg-slate-800">
           <input
             type="text"
+            value={UserMessage}
             placeholder="Enter your message"
             className="p-2 rounded-md  bg-slate-700 outline-none flex-1"
             onChange={(e) => {
@@ -179,7 +211,7 @@ const Messages = () => {
             <button
               className="p-2 bg-slate-400 rounded-md outline-none"
               onClick={() => {
-                fetchSendMessage(), MessageReceived(UserMessage);
+                sendMessage(UserMessage), sendMessageMutate.mutate(UserMessage);
               }}
             >
               <GrSend size={20} />
@@ -192,3 +224,10 @@ const Messages = () => {
 };
 
 export default Messages;
+
+function mountJoinChatEvent(chatId: string | null) {
+  throw new Error("Function not implemented.");
+}
+// function mountJoinChatEvent(chatId: string | null) {
+//   throw new Error("Function not implemented.");
+// }

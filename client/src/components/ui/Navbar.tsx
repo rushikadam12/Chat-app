@@ -4,7 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ModeToggle } from "./ModeToggle";
 import { useTheme } from "./theme-provider";
 import useStore from "@/Zustand/Store";
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import UserProfileOption from "./UserProfileOption";
 import useAuthStore from "@/Zustand/useAuth";
 const Navbar: React.FC = () => {
@@ -25,16 +25,18 @@ const Navbar: React.FC = () => {
         </label>
         {NvabarIcons.map((item, index) => {
           return (
-            <li
-              className={`w-fit flex flex-col items-center justify-center hover:bg-slate-500 hover:cursor-pointer rounded-sm p-2 self-center ${
-                MenuOption === item.name ? "bg-slate-800" : "bg-transparent"
-              }`}
-              onClick={() => {
-                setText(item.name);
-              }}
-            >
-              <item.element key={index} size={30} />
-            </li>
+            <Fragment key={index}>
+              <li
+                className={`w-fit flex flex-col items-center justify-center hover:bg-slate-500 hover:cursor-pointer rounded-sm p-2 self-center ${
+                  MenuOption === item.name ? "bg-slate-800" : "bg-transparent"
+                }`}
+                onClick={() => {
+                  setText(item.name);
+                }}
+              >
+                <item.element key={index} size={30} />
+              </li>
+            </Fragment>
           );
         })}
       </nav>

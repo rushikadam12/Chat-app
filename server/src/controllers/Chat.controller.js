@@ -343,7 +343,7 @@ const deleteOneOnOneChat = asyncHandler(async (req, res) => {
   if (isMessages?.chat) {
     await deleteCascadeChatMessage(chatId); //delete attachments
   }
-
+  
   const otherParticipant = payload?.participants?.find((participant) => {
     participant?.toString() !== req.user._id.toString();
   });
@@ -354,6 +354,7 @@ const deleteOneOnOneChat = asyncHandler(async (req, res) => {
     ChatEventEnum.LEAVE_CHAT_EVENT,
     payload
   );
+  
   return res
     .status(200)
     .json(new ApiResponse(200, "chat deleted successfully", {}, true));

@@ -124,18 +124,19 @@ const sendMessage = asyncHandler(async (req, res) => {
     throw new ApiError(500, false, "Message not found");
   }
   // logic to emit socket event about the new message created to the other participants
-
+  console.log(chat)
   chat.participants?.forEach((participantsObjectId) => {
     // here the chat is the raw instance of the chat in which participants is the array of object ids of users
     if (participantsObjectId.toString() === req.user._id.toString()) return;
-
+    
     emitMessage(
       req,
       participantsObjectId?.toString(),
-      ChatEventEnum.MESSAGE_RECEIVED_EVENT,
+      "messageReceived",
       receivedMessage
     );
   });
+  
   return res
     .status(200)
     .json(new ApiResponse(201, "Message saved successfully", resultMessage));

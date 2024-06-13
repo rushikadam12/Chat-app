@@ -12,9 +12,6 @@ const mountJoinChatEvent = (socket) => {
     // We want to just emit that to the chat where the typing is happening
     socket.join(chatId);
   });
-  socket.emit(ChatEventEnum.MESSAGE_RECEIVED_EVENT, (message) => {
-    console.log(message);
-  });
 };
 const socketInitialization = (io) => {
   return io.on("connection", async (socket) => {
@@ -24,7 +21,7 @@ const socketInitialization = (io) => {
       console.log("Socket connected with ID:", socketId);
 
       const cookies = cookie.parse(socket.handshake.headers?.cookie || "");
-      console.log(cookies);
+      // console.log(cookies);
       let token = cookies?.accessToken;
 
       if (!token) {
@@ -39,18 +36,14 @@ const socketInitialization = (io) => {
       const user = await User.findById(decode?._id).select(
         "-password -refreshToken"
       );
-
       if (!user) {
         throw new ApiError(401, "Unauthorized-access,Token is Invalid");
       }
 
       socket.user = user;
       socket.join(user._id.toString());
-      socket.emit(ChatEventEnum.CONNECT_EVENT);
       console.log("User connected 🗼. userId:", user?._id.toString());
-
-      mountJoinChatEvent(socket);
-
+      mountJoinChatEvent(socket)
       socket.on("disconnect", () => {
         console.log("User has disconnected:" + socket.user?._id);
         if (socket.user?._id) {

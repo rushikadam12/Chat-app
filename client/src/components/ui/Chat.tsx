@@ -4,13 +4,9 @@ import UserChatProfile from "./UserChatProfile";
 import { useQuery } from "@tanstack/react-query";
 import { ChatList } from "@/Api call/AxiosInstance";
 import { IAvailableUser } from "@/interfaces/AllUser";
-import { Skeleton } from "./skeleton";
-import useChatStore from "@/Zustand/useChatStore";
 import useUserIdStore from "@/Zustand/useUserIdStore";
-
-import { useContext, useEffect, useState } from "react";
-
-import useSocketStore from "@/Zustand/useSocketStore";
+import { Fragment } from "react";
+import useUserProfileStore from "@/Zustand/useUserPofileStore";
 
 const CONNECTED_EVENT = "connected";
 const DISCONNECT_EVENT = "disconnect";
@@ -23,16 +19,8 @@ const LEAVE_CHAT_EVENT = "leaveChat";
 const UPDATE_GROUP_NAME_EVENT = "updateGroupName";
 const MESSAGE_DELETE_EVENT = "messageDeleted";
 const Chat = () => {
-  const { setUserId, userId } = useUserIdStore();
-  
-
-  // const [isConnected, setIsConnected] = useState(false);
-  const [connection, setConnection] = useState(false);
-
-  const mountJoinChatEvent = useSocketStore(
-    (state: any) => state.mountJoinChatEvent
-  );
-  const chatId = useChatStore((state) => state.chatId);
+  const { setUserId } = useUserIdStore();
+  const { setUserAvatar } = useUserProfileStore();
 
   const FetchUsers = async () => {
     try {
@@ -57,7 +45,7 @@ const Chat = () => {
     queryKey: ["UserData"],
     queryFn: FetchUsers,
   });
- 
+
   if (isLoading) {
     return (
       <>
@@ -88,20 +76,24 @@ const Chat = () => {
           />
         </div>
         <div className="w-full overflow-x-auto flex hideScrollBar">
-          <AvatarBox />
-          <AvatarBox />
-          <AvatarBox />
-          <AvatarBox />
+          {availabelUsers?.map((user: IAvailableUser) => {
+            return (
+              <Fragment key={user._id}>
+                <AvatarBox {...user} />
+              </Fragment>
+            );
+          })}
         </div>
         <label className="text-lg  p-2 font-semibold">Recent</label>
         <div className="w-full overflow-y-visible hideScrollBar ">
           {availabelUsers?.map((user: IAvailableUser, index: null | number) => {
             return (
-              <>
+              <Fragment key={user._id}>
                 <li
                   className="w-full p-1 border-b-2 hover:bg-slate-800 list-none hover:cursor-pointer"
                   onClick={() => {
-                    setUserId(user._id), mountJoinChatEvent(chatId);
+                    setUserId(user._id);
+                    setUserAvatar(user);
                   }}
                 >
                   <UserChatProfile
@@ -112,7 +104,7 @@ const Chat = () => {
                     _id={user._id}
                   />
                 </li>
-              </>
+              </Fragment>
             );
           })}
         </div>

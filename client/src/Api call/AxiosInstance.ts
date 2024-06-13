@@ -50,13 +50,48 @@ export const ChatList = async () => {
   return AxiosInstance.get(`/chat-app/chats/users`, { withCredentials: true });
 };
 
-//  const { userId } = useUserIdStore.getState();
-// export const createChat = async () => {
-//   if (!userId) {
-//     return
-//   }
-//   //this request create OneOnOne chat or retrieve previous chat if already created
-//   return AxiosInstance.post(`/chat-app/chats/c/${userId}`, {
-//     withCredentials: true,
-//   });
-// };
+export const SendMessageReq = async (
+  chatId: string | null,
+  UserMessage: string
+) => {
+  return AxiosInstance.post(
+    `chat-app/messages/${chatId}`,
+    { content: UserMessage },
+    {
+      withCredentials: true,
+    }
+  );
+};
+/*
+  const resp = await axios.post(
+        `http://localhost:5121/api/v1/chat-app/chats/c/${userId}`,
+        {},
+        {
+          withCredentials: true,
+        }
+      );
+ */
+export const fetchChatReq = async (userId: string | null) => {
+  return axios.post(
+    `http://localhost:5121/api/v1/chat-app/chats/c/${userId}`,
+    {},
+    {
+      withCredentials: true,
+    }
+  );
+};
+
+export const fetchMessageReq = async (chatId: string | null) => {
+  return AxiosInstance.get(`chat-app/messages/${chatId}`, {
+    withCredentials: true,
+  });
+};
+
+export const DeleteChatReq = async (chatId: string | null) => {
+  return axios.delete(
+    `http://localhost:5121/api/v1/chat-app/chats/removeMessage/${chatId}`,
+    {
+      withCredentials: true,
+    }
+  );
+};

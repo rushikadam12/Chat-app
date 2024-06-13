@@ -14,13 +14,12 @@ import { Label } from "@/components/ui/label";
 import { Link, useNavigate } from "react-router-dom";
 import { ThemeProvider } from "@/components/ui/theme-provider";
 import { SiGooglechat } from "react-icons/si";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { authCall, loginPost } from "@/Api call/AxiosInstance";
 import { CircleSpinner } from "react-spinners-kit";
 import { useForm, SubmitHandler } from "react-hook-form";
-import { toast, useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/components/ui/use-toast";
 import { ToastAction } from "@/components/ui/toast";
-import { Toaster } from "@/components/ui/toaster";
 
 type Inputs = {
   email: string;
